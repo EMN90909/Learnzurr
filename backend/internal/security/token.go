@@ -26,10 +26,13 @@ type TokenClaims struct {
 
 func jwtSecret() ([]byte, error) {
 	secret := strings.TrimSpace(os.Getenv("LEARNZUR_JWT_SECRET"))
+	if secret == "" {
+		secret = strings.TrimSpace(os.Getenv("JWT_SECRET"))
+	}
 	if len(secret) >= 32 {
 		return []byte(secret), nil
 	}
-	return nil, errors.New("LEARNZUR_JWT_SECRET must be at least 32 characters")
+	return nil, errors.New("LEARNZUR_JWT_SECRET or JWT_SECRET must be at least 32 characters")
 }
 
 func SignAccessToken(userID, role string) (string, error) {
