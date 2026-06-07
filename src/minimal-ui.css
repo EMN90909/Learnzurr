@@ -1,0 +1,139 @@
+html,
+body {
+  background: var(--paper) !important;
+}
+
+body {
+  background-image: none !important;
+}
+
+* {
+  border-radius: 0 !important;
+}
+
+[class*="gradient"],
+[class*="from-purple"],
+[class*="via-purple"],
+[class*="to-purple"],
+[class*="from-violet"],
+[class*="via-violet"],
+[class*="to-violet"],
+[class*="from-indigo"],
+[class*="via-indigo"],
+[class*="to-indigo"] {
+  background-image: none !important;
+}
+
+.bg-gradient-to-r,
+.bg-gradient-to-l,
+.bg-gradient-to-t,
+.bg-gradient-to-b,
+.bg-gradient-to-br,
+.bg-gradient-to-bl,
+.bg-gradient-to-tr,
+.bg-gradient-to-tl {
+  background-image: none !important;
+  background-color: var(--surface) !important;
+}
+
+.card-struta,
+.bg-\[var\(--surface\)\],
+[role="dialog"],
+[role="menu"],
+[role="listbox"],
+[data-radix-popper-content-wrapper] > *,
+header,
+aside,
+.nav-struta,
+.liquid-glass-header,
+.sticky.top-0 {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+button,
+.btn-struta-primary,
+.btn-struta-gold,
+[role="tab"],
+input,
+textarea,
+select,
+[role="combobox"] {
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.btn-struta-primary {
+  background: var(--ink) !important;
+  color: var(--paper) !important;
+}
+
+.btn-struta-gold {
+  background: var(--gold) !important;
+  color: var(--ink) !important;
+}
+
+button:hover,
+.btn-struta-primary:hover,
+.btn-struta-gold:hover,
+[role="tab"]:hover {
+  transform: none !important;
+}
+
+.rounded,
+.rounded-sm,
+.rounded-md,
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl,
+.rounded-3xl,
+.rounded-full,
+.rounded-\[2rem\],
+.rounded-\[1\.5rem\],
+.rounded-\[var\(--radius-lg\)\],
+.rounded-\[var\(--radius-xl\)\] {
+  border-radius: 0 !important;
+}
+
+.shadow,
+.shadow-sm,
+.shadow-md,
+.shadow-lg,
+.shadow-xl,
+.shadow-2xl,
+[class*="shadow-"] {
+  box-shadow: none !important;
+}
+
+.text-purple-500,
+.text-purple-600,
+.text-purple-700,
+.text-violet-500,
+.text-violet-600,
+.text-violet-700,
+.text-indigo-500,
+.text-indigo-600,
+.text-indigo-700 {
+  color: var(--gold) !important;
+}
+
+.bg-purple-50,
+.bg-purple-100,
+.bg-violet-50,
+.bg-violet-100,
+.bg-indigo-50,
+.bg-indigo-100 {
+  background-color: var(--gold-bg) !important;
+}
+
+.border-purple-100,
+.border-purple-200,
+.border-violet-100,
+.border-violet-200,
+.border-indigo-100,
+.border-indigo-200 {
+  border-color: var(--border) !important;
+}

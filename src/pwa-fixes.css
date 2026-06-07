@@ -1,0 +1,86 @@
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+html {
+  min-height: 100dvh;
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+@media (display-mode: standalone) {
+  body {
+    min-height: 100svh;
+    overscroll-behavior-y: contain;
+  }
+
+  .nav-struta {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+}
+
+.struta-app-shell {
+  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.struta-main-scroll {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-bottom: 6rem;
+}
+
+.struta-listing-grid {
+  align-items: stretch;
+}
+
+.struta-listing-card {
+  min-height: 420px;
+  max-height: 560px;
+  display: flex;
+  flex-direction: column;
+}
+
+.struta-listing-card-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scrollbar-soft::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-soft::-webkit-scrollbar-thumb {
+  background: rgba(200, 146, 58, 0.35);
+  border-radius: 999px;
+}
+
+.scrollbar-soft::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (max-width: 768px) {
+  .struta-listing-card {
+    max-height: none;
+    min-height: auto;
+  }
+}

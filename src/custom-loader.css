@@ -1,0 +1,53 @@
+@keyframes loader {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.custom-loader {
+  position: relative;
+  width: 50px;
+  height: 50px;
+}
+
+.custom-loader::before,
+.custom-loader::after,
+.custom-loader span {
+  content: "";
+  background: #ddd;
+  width: 10px;
+  height: 10px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -5px;
+  margin-left: -5px;
+  border-radius: 2px;
+}
+
+.custom-loader::before {
+  margin-top: -25px;
+  margin-left: -25px;
+  animation: loader 675ms ease-in-out 0s infinite alternate;
+}
+
+.custom-loader::after {
+  margin-top: 15px;
+  margin-left: 15px;
+  animation: loader 675ms ease-in-out 600ms infinite;
+}
+
+.loader-inline {
+  display: inline-grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.loader-inline .custom-loader {
+  transform: scale(.36);
+  transform-origin: center;
+}
