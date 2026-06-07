@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Struta dark icon</title>
+  <desc id="desc">A warm memorial arch with a path and leaf accent on a dark background.</desc>
+  <rect width="256" height="256" rx="56" fill="#151311"/>
+  <path d="M128 44c40.87 0 74 33.13 74 74v70c0 13.255-10.745 24-24 24h-20v-94c0-16.569-13.431-30-30-30s-30 13.431-30 30v94H78c-13.255 0-24-10.745-24-24v-70c0-40.87 33.13-74 74-74z" fill="#f5efe2"/>
+  <path d="M128 92c14.36 0 26 11.64 26 26v78h-52v-78c0-14.36 11.64-26 26-26z" fill="#d7a24b"/>
+  <path d="M84 210c16.08-20.344 31.908-30.516 47.484-30.516S162.92 189.656 180 210" fill="none" stroke="#f5efe2" stroke-linecap="round" stroke-width="14"/>
+  <path d="M174 58c12.793 3.431 21.842 10.098 27.148 20-14.47.932-24.456-2.402-29.96-10 1.863-3.206 2.8-6.539 2.812-10z" fill="#8dc07b"/>
+</svg>

@@ -1,0 +1,20 @@
+{
+  "name": "Struta",
+  "short_name": "Struta",
+  "description": "The unified funeral ecosystem for families, funeral homes, and vendors.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4efe5",
+  "theme_color": "#c8923a",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/struta_light_mode.png", "sizes": "any", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/struta_light_mode.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/struta_light_mode.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Open Struta", "short_name": "Open", "url": "/", "icons": [{ "src": "/struta_light_mode.png", "sizes": "any", "type": "image/png" }] }
+  ]
+}
