@@ -1,0 +1,47 @@
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server","--appendonly","yes"]
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    command: ["/app/learnzur-api"]
+    environment:
+      REDIS_URL: redis://redis:6379
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+    depends_on: [redis]
+  auth:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    command: ["/app/learnzur-auth"]
+    environment:
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-me}
+      LEARNZUR_PIN_PEPPER: ${LEARNZUR_PIN_PEPPER:-change-me}
+    depends_on: [redis]
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    command: ["/app/learnzur-worker"]
+    environment:
+      REDIS_URL: redis://redis:6379
+    depends_on: [redis]
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    environment:
+      VITE_API_BASE_URL: /api
+    depends_on: [api, auth]
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl.conf:/etc/nginx/conf.d/ssl.conf:ro
+    ports:
+      - "8088:8088"
+    depends_on: [frontend, api, auth]

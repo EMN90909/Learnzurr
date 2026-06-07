@@ -1,0 +1,5 @@
+FROM alpine:3.21
+RUN adduser -D -H sandbox
+USER sandbox
+WORKDIR /sandbox
+CMD ["sh","-c","echo Learnzur San sandbox image placeholder; sleep 3600"]

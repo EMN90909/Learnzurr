@@ -1,0 +1,1 @@
+<main class="shell"><header class="top"><a href="/" style="color:white">Learnzur</a><strong>Admin</strong></header><section class="grid"><article class="card"><h1>Ngo</h1><p class="muted">Admin page shell with loading, error, empty-state, and mobile-first layout reserved for implementation after the documented Struta migration mapping.</p></article></section></main>

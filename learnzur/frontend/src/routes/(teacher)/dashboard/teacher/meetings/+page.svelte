@@ -1,0 +1,1 @@
+<main class="shell"><header class="top"><a href="/" style="color:white">Learnzur</a><strong>Teacher</strong></header><section class="grid"><article class="card"><h1>Meetings</h1><p class="muted">Teacher page shell with loading, error, empty-state, and mobile-first layout reserved for implementation after the documented Struta migration mapping.</p></article></section></main>
