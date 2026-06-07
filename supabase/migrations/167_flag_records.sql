@@ -1,0 +1,2 @@
+create table if not exists public.flag_records (id uuid primary key default gen_random_uuid(), reporter_id uuid references public.users(id), target_user_id uuid references public.users(id), content_table text not null, content_id uuid, reason text not null, severity severity_level not null default 'warning', status review_status not null default 'pending_review', metadata jsonb not null default '{}'::jsonb, created_at timestamptz not null default now());
+alter table public.flag_records enable row level security;

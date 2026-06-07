@@ -1,0 +1,2 @@
+create table if not exists public.quizzes (id uuid primary key default gen_random_uuid(), class_id uuid not null references public.classes(id) on delete cascade, teacher_id uuid not null references public.users(id), title text not null, due_at timestamptz, time_limit_minutes int, status review_status not null default 'draft', created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+alter table public.quizzes enable row level security;

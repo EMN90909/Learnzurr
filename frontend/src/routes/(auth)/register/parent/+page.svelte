@@ -1,0 +1,11 @@
+<script lang="ts">
+  import { goto } from '$app/navigation';
+  import { kenyaCounties } from '$lib/utils';
+  import { signupParent } from '$lib/api';
+  import HCaptcha from '$lib/components/HCaptcha.svelte';
+  import OTPEmailCard from '$lib/components/OTPEmailCard.svelte';
+  let step=1; let email=''; let password=''; let confirmPassword=''; let name=''; let county='Nairobi'; let phone=''; let otp=''; let hcaptchaToken=''; let error=''; let loading=false;
+  function next(){ error=''; if(step===1 && (!email.includes('@') || password.length<8 || password!==confirmPassword)){ error='Use a valid email and matching password of 8+ characters.'; return; } if(step===2 && (!name.trim() || !/^((\+254)|0)7\d{8}$/.test(phone.replace(/\s+/g,'')))){ error='Enter your name and a valid Kenyan phone number.'; return; } step+=1; }
+  async function submit(){ error=''; if(!/^\d{6}$/.test(otp)){ error='Enter the 6-digit OTP from your email.'; return; } loading=true; const res=await signupParent({email,password,name,county,phone,otp,hcaptchaToken}); loading=false; if(!res.ok){ error=res.error; return; } goto('/parent/dashboard'); }
+</script>
+<section class="page auth-form"><h1>Parent signup</h1><p class="muted">Step {step}/3 — create your parent account, verify email, then add children from your dashboard.</p><div class="card">{#if error}<p class="error">{error}</p>{/if}{#if step===1}<label>Email<input bind:value={email} type="email"/></label><label>Password<input bind:value={password} type="password"/></label><label>Confirm password<input bind:value={confirmPassword} type="password"/></label><HCaptcha bind:token={hcaptchaToken} label="Protect parent signup"/><button on:click={next}>Next</button>{:else if step===2}<label>Full name<input bind:value={name}/></label><label>County<select bind:value={county}>{#each kenyaCounties as c}<option>{c}</option>{/each}</select></label><label>Phone<input bind:value={phone} inputmode="tel"/></label><button on:click={()=>step=1}>Back</button><button on:click={next}>Next</button>{:else}<OTPEmailCard {email} purpose="signup" {hcaptchaToken}/><label>OTP<input bind:value={otp} maxlength="6" inputmode="numeric"/></label><button on:click={()=>step=2}>Back</button><button disabled={loading} on:click={submit}>{loading?'Creating…':'Create parent account'}</button>{/if}</div></section>

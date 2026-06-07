@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: learnzur-web
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: PUBLIC_HCAPTCHA_SITE_KEY
+        sync: false
+      - key: HCAPTCHA_SECRET
+        sync: false
+      - key: LEARNZUR_JWT_SECRET
+        sync: false
+      - key: HCAPTCHA_BYPASS_IN_DEV
+        value: "false"
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        value: Learnzur <noreply@learnzur.app>
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: FLAG_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false

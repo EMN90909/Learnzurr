@@ -1,0 +1,2 @@
+create table if not exists public.san_projects (id uuid primary key default gen_random_uuid(), learner_id uuid not null references public.users(id), title text not null, language text not null, source_code text not null default '', visibility text not null default 'private', metadata jsonb not null default '{}'::jsonb, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+alter table public.san_projects enable row level security;

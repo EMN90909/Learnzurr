@@ -1,0 +1,6 @@
+FROM alpine:3.21
+RUN adduser -D sandbox && apk add --no-cache nodejs npm python3 php83
+USER sandbox
+WORKDIR /sandbox
+NETWORK none
+CMD ["sh", "-c", "echo Learnzur San sandbox ready"]

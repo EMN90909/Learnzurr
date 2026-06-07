@@ -1,0 +1,2 @@
+<svelte:head><title>Studio moved | Learnzur</title></svelte:head>
+<section class="page"><p class="eyebrow">Studio update</p><h1>Create is now Studio</h1><p class="lead">This creation tool now lives in Studio so learners can start every project from one friendly + button.</p><a class="button" href="/learner/studio/beat">Open Studio</a><a class="button secondary" href="/learner/studio">Choose another project</a></section>

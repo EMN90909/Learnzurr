@@ -1,0 +1,2 @@
+create table if not exists public.quiz_submissions (id uuid primary key default gen_random_uuid(), quiz_id uuid not null references public.quizzes(id) on delete cascade, learner_id uuid not null references public.users(id), answers jsonb not null default '[]'::jsonb, score numeric(6,2), submitted_at timestamptz not null default now(), unique(quiz_id, learner_id));
+alter table public.quiz_submissions enable row level security;

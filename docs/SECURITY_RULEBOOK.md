@@ -1,0 +1,62 @@
+# Learnzur Security Rulebook
+
+- Validate file extensions: only .png, .jpg, .txt, .json uploads are accepted.
+- Validate file size: reject upload bodies greater than 10MB.
+- Validate MIME type: inspect file bytes and accepted content types, not just extension.
+- Sanitize filenames: remove traversal, angle brackets, question marks, asterisks, quotes and separators.
+- Validate URL parameters: identifiers must be alphanumeric with dash or underscore.
+- Validate JSON structure: decode JSON and check required fields before use.
+- Validate user input length: text fields are capped at 100 characters by default.
+- Validate array length: arrays are capped at 7 items by default.
+- Validate string format: HTML and script tags are rejected.
+- Validate numeric ranges: values must stay inside expected minimum and maximum bounds.
+- Session token validation: secured endpoints require a bearer token.
+- Token expiration: tokens older than 30 days are rejected.
+- Rate limiting: each IP receives at most 100 requests per minute.
+- Origin validation: only configured Learnzur frontend origins may call the API.
+- IP whitelisting: admin-only endpoints can require an explicit IP allow list.
+- Password hashing: passwords are derived with salted HMAC-SHA256 iterations when external bcrypt is unavailable.
+- Password complexity: at least 8 characters, one number and one letter.
+- Account lockout: repeated failed login attempts are tracked and can lock an account.
+- Session invalidation: logout clears refresh cookies and removes server session state.
+- Role-based access: user, teacher, organization, parent, learner and admin permissions are separated.
+- Encrypt sensitive data: AES-256-GCM protects private stored values.
+- Hash passwords: plain passwords are never stored.
+- Encrypt API keys: API keys are encrypted before database storage.
+- Mask sensitive logs: passwords, PINs, OTPs and tokens are removed from logs.
+- Secure cookies: Secure, HttpOnly and SameSite=Strict are used for session cookies.
+- Data encryption at rest: file payloads can be encrypted before storage.
+- Secure file storage: uploads are stored outside the public web root.
+- Encrypt database connections: PostgreSQL connections should use TLS in production.
+- Sanitize database queries: repository boundaries use parameterized query patterns.
+- Clear temporary data: temporary files are removed after processing.
+- Content Security Policy: default-src self.
+- X-Content-Type-Options: nosniff.
+- X-Frame-Options: DENY.
+- X-XSS-Protection: 1; mode=block.
+- Strict Transport Security: max-age=31536000.
+- Referrer Policy: strict-origin-when-cross-origin.
+- Permissions Policy: microphone is restricted unless classroom permission is granted.
+- Cache Control: no-store and no-cache on sensitive responses.
+- Set-Cookie attributes: Secure, HttpOnly and SameSite=Strict.
+- Custom header validation: required security headers are checked by middleware.
+- Validate file content: PNG and JPG header bytes must match claimed formats.
+- Random filename generation: crypto/rand creates collision-resistant upload names.
+- File type whitelist: only approved types are persisted.
+- Directory traversal prevention: cleaned paths cannot escape storage root.
+- File permission restrictions: uploaded files are written with 0644 permissions.
+- Temp file cleanup: temp files older than one hour are eligible for deletion.
+- File size limit: max upload size is enforced before processing.
+- Anti-overwrite: random names prevent collisions.
+- Validate file checksum: SHA-256 checksums can be compared with expected values.
+- Scan for malware: known byte signatures are rejected before storage.
+- Use strconv parsing: integer conversion reports errors.
+- Validate type conversions: conversions are checked before use.
+- Nil pointer checks: nil values are guarded before dereference.
+- Bounds checking: array index access is guarded.
+- Error handling: returned errors are checked and logged safely.
+- Avoid eval: dynamic code execution is not used in the API service.
+- Use immutable constants: security constants are const values.
+- Check return values: all critical writes and encodes check returned errors.
+- Secure random generation: crypto/rand is used instead of math/rand.
+- Code comments for security: sensitive sections explain the protection being applied.

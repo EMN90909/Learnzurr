@@ -1,0 +1,36 @@
+package performance
+
+func BackendOptimizationRules() []string {
+	return []string{
+		"Use strings.Builder for string assembly instead of repeated concatenation.",
+		"Pre-allocate slices with make([]T, 0, size) for known workloads.",
+		"Use sync.Pool for reusable builders and buffers to reduce GC pressure.",
+		"Avoid reflection in hot paths by using concrete typed structs.",
+		"Batch database operations in transactions for multi-row writes.",
+		"Use bufio.Reader for large file reads and sandbox output streams.",
+		"Stream responses through io.Writer instead of loading full payloads into memory.",
+		"Cache frequently accessed settings and engine metadata in memory/Redis.",
+		"Use json.RawMessage to pass through unneeded JSON fields without parsing them.",
+		"Minimize struct size by using smaller numeric fields where domain ranges allow.",
+		"Use http.ServeMux for low-overhead routing.",
+		"Advertise HTTP/2 compatibility through the standard net/http server stack behind TLS/Nginx.",
+		"Compress text responses with gzip when the client accepts it.",
+		"Set request timeouts to prevent hanging connections.",
+		"Reuse outbound TCP connections with tuned http.Transport settings.",
+		"Disable request logging for health checks.",
+		"Use pooled database connections with configured open/idle limits.",
+		"Expose fast /api/health and /health endpoints for load balancers.",
+		"Use context.Context for cancellation and deadline propagation.",
+		"Limit request body size with http.MaxBytesReader.",
+		"Use constants for static values to avoid runtime allocation.",
+		"Keep small helper functions inline-friendly and avoid unnecessary //go:noinline.",
+		"Avoid closures in repeated hot paths where named functions are clearer and cheaper.",
+		"Use strconv for numeric parsing/formatting instead of fmt in hot code.",
+		"Pre-compile regular expressions once at package init.",
+		"Use time.Since for duration measurement.",
+		"Avoid defer in loops and clean resources explicitly inside loop bodies.",
+		"Use bytes.Buffer for large byte/string assembly.",
+		"Minimize imports to keep binaries lean and compilation predictable.",
+		"Use build tags for optional heavy features in production builds.",
+	}
+}

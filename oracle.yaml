@@ -1,0 +1,30 @@
+# Learnzur Oracle Free ARM VM deployment helper.
+# Use this with cloud-init or as a checklist for an Ubuntu ARM instance.
+instance:
+  name: learnzur-oracle-arm
+  shape: VM.Standard.A1.Flex
+  ocpus: 2
+  memory_gb: 12
+  image: ubuntu-22.04
+network:
+  open_ports:
+    - 80
+    - 443
+    - 22
+setup:
+  packages:
+    - docker.io
+    - docker-compose-plugin
+    - nginx
+    - certbot
+  commands:
+    - sudo usermod -aG docker ubuntu
+    - cp .env.example .env
+    - docker compose up --build -d
+health:
+  endpoint: https://your-domain.com/api/health
+  expected_status: ok
+notes:
+  - Put real secrets in .env, never commit them.
+  - Point your domain to the VM public IP before enabling TLS.
+  - Use Supabase for PostgreSQL/Auth/Realtimes and Redis for queues/cache.

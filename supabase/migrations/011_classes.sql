@@ -1,0 +1,3 @@
+create table if not exists public.classes (id uuid primary key default gen_random_uuid(), teacher_id uuid not null references public.users(id), title text not null, subject text not null, description text, min_age int not null default 10, max_age int not null default 18, price_cents int not null default 0, start_date date, end_date date, status review_status not null default 'draft', metadata jsonb not null default '{}'::jsonb, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+alter table public.classes enable row level security;
+create index if not exists idx_classes_subject_status on public.classes(subject,status);

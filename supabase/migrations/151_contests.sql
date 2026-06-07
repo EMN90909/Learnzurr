@@ -1,0 +1,2 @@
+create table if not exists public.contests (id uuid primary key default gen_random_uuid(), title text not null, description text not null, category text not null, prize_cents int not null default 0, sponsor_id uuid references public.users(id), starts_at timestamptz not null, ends_at timestamptz not null, status review_status not null default 'draft', created_at timestamptz not null default now());
+alter table public.contests enable row level security;

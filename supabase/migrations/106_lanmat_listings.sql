@@ -1,0 +1,2 @@
+create table if not exists public.lanmat_listings (id uuid primary key default gen_random_uuid(), seller_id uuid not null references public.users(id), title text not null, description text not null, category text not null, price_cents int not null check(price_cents >= 0), file_url text, status review_status not null default 'pending_review', metadata jsonb not null default '{}'::jsonb, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+alter table public.lanmat_listings enable row level security;

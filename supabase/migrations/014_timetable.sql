@@ -1,0 +1,2 @@
+create table if not exists public.timetable (id uuid primary key default gen_random_uuid(), class_id uuid not null references public.classes(id) on delete cascade, weekday int not null check (weekday between 0 and 6), starts_at time not null, duration_minutes int not null check (duration_minutes between 15 and 240), timezone text not null default 'Africa/Nairobi', notify_minutes_before int not null default 15, created_at timestamptz not null default now());
+alter table public.timetable enable row level security;

@@ -1,0 +1,2 @@
+create table if not exists public.quiz_questions (id uuid primary key default gen_random_uuid(), quiz_id uuid not null references public.quizzes(id) on delete cascade, prompt text not null, options jsonb not null default '[]'::jsonb, correct_answer jsonb not null default '{}'::jsonb, points int not null default 1, position int not null default 0);
+alter table public.quiz_questions enable row level security;

@@ -1,0 +1,2 @@
+create table if not exists public.enrollments (id uuid primary key default gen_random_uuid(), class_id uuid not null references public.classes(id) on delete cascade, learner_id uuid not null references public.users(id) on delete cascade, parent_id uuid references public.users(id), payment_reference text, status payment_status not null default 'pending', enrolled_at timestamptz not null default now(), unique(class_id, learner_id));
+alter table public.enrollments enable row level security;

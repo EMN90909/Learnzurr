@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+node_modules/
+.svelte-kit/
+frontend/build/
+frontend/.svelte-kit/
+backend/bin/
+*.log
+.DS_Store
+coverage/
+.tmp/
+backend/api
+backend/worker
+*.test

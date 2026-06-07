@@ -1,0 +1,2 @@
+create table if not exists public.transaction_splits (id uuid primary key default gen_random_uuid(), transaction_id uuid not null references public.transactions(id) on delete cascade, beneficiary_user_id uuid references public.users(id), pot_name text not null, amount_cents int not null check(amount_cents >= 0), created_at timestamptz not null default now());
+alter table public.transaction_splits enable row level security;

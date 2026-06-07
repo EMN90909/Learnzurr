@@ -1,0 +1,3 @@
+create table if not exists public.transactions (id uuid primary key default gen_random_uuid(), user_id uuid references public.users(id), class_id uuid references public.classes(id), amount_cents int not null check(amount_cents >= 0), currency text not null default 'KES', provider text not null default 'mpesa', provider_reference text unique, status payment_status not null default 'pending', metadata jsonb not null default '{}'::jsonb, created_at timestamptz not null default now());
+alter table public.transactions enable row level security;
+create index if not exists idx_transactions_status_created on public.transactions(status, created_at desc);

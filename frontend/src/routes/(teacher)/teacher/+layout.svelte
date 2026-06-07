@@ -1,0 +1,2 @@
+<script lang="ts">const nav=['dashboard','profile','classes','lms/quizzes','lms/tests','lms/assignments','lms/grades','lms/progress','timetable','meetings','earnings','payouts','lanmat','messages','notifications','settings'];</script>
+<div class="layout"><aside class="sidebar"><h2>Learnzur Teacher</h2>{#each nav as item}<a href={`/teacher/${item}`}>{item}</a>{/each}</aside><main class="content"><slot /></main></div>
