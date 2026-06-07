@@ -1,0 +1,15 @@
+create index if not exists idx_user_profiles_role on public.user_profiles(role);
+create index if not exists idx_user_profiles_plan_status on public.user_profiles(plan_status);
+create index if not exists idx_subscription_payment_requests_user_status on public.subscription_payment_requests(user_id, status);
+create index if not exists idx_subscription_payment_requests_transaction_id on public.subscription_payment_requests(transaction_id);
+create index if not exists idx_subscription_payment_requests_plan_status on public.subscription_payment_requests(plan_code, status);
+create index if not exists idx_subscriptions_user_status on public.subscriptions(user_id, status);
+create index if not exists idx_subscriptions_provider_status on public.subscriptions(payment_provider, payment_status);
+create index if not exists idx_payments_user_provider_status on public.payments(user_id, provider, status);
+create index if not exists idx_payments_gateway_reference on public.payments(payment_gateway_reference);
+create index if not exists idx_payments_paypal_order_id on public.payments(paypal_order_id);
+create index if not exists idx_provider_payment_profiles_provider on public.provider_payment_profiles(provider_id, provider_type);
+create index if not exists idx_homes_owner_user_id on public.homes(owner_user_id);
+create index if not exists idx_homes_active on public.homes(active);
+create index if not exists idx_vendors_owner_user_id on public.vendors(owner_user_id);
+create index if not exists idx_vendors_active on public.vendors(active);

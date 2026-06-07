@@ -1,0 +1,1925 @@
+<<<<<<< HEAD
+You are an expert full-stack AI developer. Your job is to fix and improve the existing Struta funeral platform codebase without changing the original structure, design logic, or intended business flow unless specifically required by the fixes listed below.
+
+IMPORTANT:
+Do exactly what I say, step by step, without adding or changing anything unless I explicitly ask.
+
+Keep the form and structure of my code exactly as it is. Only change the code if I tell you to “fix a bug”, “rewrite this part”, or “update this logic”.
+
+Never invent new functions, libraries, or features that I did not ask for.
+
+Never add placeholders, TODO, FIXME, example values, or incomplete code. All code must be ready to run as-is.
+
+If something is unclear, ask me for clarification instead of guessing.
+
+Keep changes as small and literal as possible; never “optimize” or “improve” anything unless I tell you to.
+
+After each step, briefly list what you changed and why, so I can review it before the next step.
+
+Push all completed working changes to the GitHub main branch for this repo:
+
+github main branch repo:
+EMN90909/strut.git
+
+Also use Supabase where needed to fix database issues, table errors, authentication, notification flows, payment records, subscriptions, webhook data, and any backend reliability issue.
+
+The platform is called Struta. It is a funeral service platform. It connects bereaved users with funeral homes, vendors, service providers, memorial features, requests, messaging, payments, invoices, subscriptions, and notifications.
+
+Your goal is to make it production-ready, reliable, secure, and working for real users.
+
+Do not change the main product idea. Do not rebuild the app from scratch. Do not redesign everything. Fix what is broken and add only the features listed here.
+
+Start by scanning the codebase carefully and identify undefined elements, missing imports, broken references, broken Supabase calls, broken routes, broken request logic, broken payment logic, broken notification logic, broken auth flows, broken delete functions, broken messaging popups, and any runtime errors that stop the platform from working.
+
+Fix all undefined elements and missing references without changing the existing logic. If a function, component, variable, route, table, column, hook, or service is referenced but missing, fix it in the smallest possible way. If the code expects a Supabase table or column, either connect it to the correct existing table or add the required migration/table/column if needed. Do not rename things unnecessarily.
+
+SMTP EMAIL SETUP
+
+Set up real SMTP email delivery using Brevo SMTP. The app must use environment variables for all SMTP values. Do not hardcode secrets directly inside frontend code or public client code.
+
+SMTP configuration should support:
+
+SMTP server:
+smtp-relay.brevo.com
+
+Port:
+587
+
+Login:
+9c14eb001@smtp-brevo.com
+
+SMTP key:
+use this from environment variable, do not expose it in public frontend files.
+
+Email delivery must be used for:
+- email verification
+- forgot password
+- reset password
+- invoice emails
+- receipt emails
+- payment notifications
+- request approval notifications
+- important platform emails
+
+Make sure SMTP works from the backend/server side only. Do not send SMTP directly from the browser.
+
+AUTHENTICATION FLOWS
+
+Add complete authentication flows on top of the existing auth system.
+
+Implement:
+- email sign-up with verification
+- forgot-password flow
+- reset-password flow
+- Google OAuth login
+- auth callback handling
+- clean redirects after confirmation
+- secure session handling
+
+Create or fix these pages:
+- /forgot-password
+- /reset-password
+- /auth/callback
+
+Use Supabase Auth properly.
+
+For email sign-up:
+- user enters email/password
+- Supabase sends verification email
+- user confirms email
+- app redirects user cleanly after confirmation
+- user session is handled correctly
+
+For forgot password:
+- user enters email
+- Supabase sends reset link
+- reset link opens /reset-password
+- user sets new password
+- password updates securely
+- user is redirected after success
+
+For Google login:
+Use Supabase OAuth.
+Callback URL:
+https://rhppcequuhnfovcerqih.supabase.co/auth/v1/callback
+
+The callback page must read the auth session correctly, handle errors cleanly, and redirect users to the right place.
+
+PAYMENTS MUST BE REAL, NOT SIMULATION
+
+Remove all payment simulation. Replace simulated payment success or fake payment updates with real backend payment processing.
+
+Build real production-ready PayPal payment backend.
+
+The payment flow must do this:
+
+1. Create invoice/order with PayPal API.
+2. Store the payment as pending in Supabase.
+3. Receive PayPal webhook calls.
+4. Verify the webhook signature with PayPal before doing anything else.
+5. Update the database only after webhook verification.
+6. Trigger notifications and receipt emails after verified payment events.
+7. Support refunds properly.
+8. Handle duplicates safely.
+9. Log all important webhook processing details.
+
+Create a production-ready PayPal webhook API endpoint:
+
+/api/paypal/webhook
+
+Webhook URL:
+https://struta.onrender.com/api/paypal/webhook
+
+Webhook ID:
+09R24581S94151325
+
+Events tracked:
+Billing plan activated,
+Billing plan created,
+Billing plan deactivated,
+Billing subscription activated,
+Billing subscription created,
+Billing subscription expired,
+Customer dispute updated,
+Checkout order approved,
+Billing plan pricing-change activated,
+Customer dispute resolved,
+Billing plan updated,
+Customer dispute created,
+Billing subscription cancelled,
+Billing subscription payment failed,
+Billing subscription suspended,
+Billing subscription updated.
+
+The webhook endpoint must be written in TypeScript and must be backend only.
+
+The PayPal webhook handler must:
+- verify every incoming webhook with PayPal before doing anything else
+- reject unverified webhooks
+- only update Supabase after verification
+- route events by exact event_type
+- use a strict switch/case structure
+- keep checkout events separate from capture events
+- keep billing-plan events separate from subscription events
+- keep dispute events separate from all payment logic
+- never mix event logic
+- be idempotent
+- return 200 OK quickly after verification
+- queue slow work asynchronously if needed
+- log raw event
+- log PayPal event id
+- log resource id
+- log transmission id
+- log processing result
+- prevent duplicate updates from duplicate webhook deliveries
+
+Support these exact event groups:
+
+Checkout:
+CHECKOUT.ORDER.APPROVED
+CHECKOUT.PAYMENT-APPROVAL.REVERSED
+
+Payments:
+PAYMENT.CAPTURE.PENDING
+PAYMENT.CAPTURE.COMPLETED
+PAYMENT.CAPTURE.DENIED
+PAYMENT.CAPTURE.REFUNDED
+PAYMENT.CAPTURE.REVERSED
+
+Billing plans:
+BILLING.PLAN.CREATED
+BILLING.PLAN.UPDATED
+BILLING.PLAN.ACTIVATED
+BILLING.PLAN.PRICING-CHANGE.ACTIVATED
+BILLING.PLAN.DEACTIVATED
+
+Subscriptions:
+BILLING.SUBSCRIPTION.CREATED
+BILLING.SUBSCRIPTION.ACTIVATED
+BILLING.SUBSCRIPTION.UPDATED
+BILLING.SUBSCRIPTION.EXPIRED
+BILLING.SUBSCRIPTION.CANCELLED
+BILLING.SUBSCRIPTION.SUSPENDED
+BILLING.SUBSCRIPTION.PAYMENT.FAILED
+
+Disputes:
+CUSTOMER.DISPUTE.CREATED
+CUSTOMER.DISPUTE.UPDATED
+CUSTOMER.DISPUTE.RESOLVED
+
+Important webhook behavior:
+
+CHECKOUT.ORDER.APPROVED should only trigger order capture logic.
+
+Payment capture events should only update payment state and notifications.
+
+Billing plan events should only update plan tables.
+
+Subscription events should only update subscription tables and trial/active access status.
+
+Dispute events should only update dispute-related records, activity logs, and notifications.
+
+Do not merge these domains in the same handler branch.
+
+Create a clean service layer for each event family:
+- checkout service
+- payment capture service
+- refund service
+- billing plan service
+- subscription service
+- dispute service
+- notification service
+- email service
+- activity log service
+
+All services must be ready to run as-is. No placeholders.
+
+SUPABASE PAYMENT TABLES AND DATABASE
+
+Fix Supabase database structure where needed.
+
+The webhook must update:
+- payments table
+- invoices table
+- subscriptions table
+- billing plans table
+- notification table
+- activity logs table
+- webhook events table if needed
+
+Add idempotency protection by storing PayPal webhook event IDs. If the same webhook event comes again, do not process it twice.
+
+For every PayPal event:
+- record the raw event
+- record processing status
+- record any error
+- record resource ID
+- record event type
+- record created time
+- record processed time
+
+Fix the current Supabase error:
+
+Failed to load resource: the server responded with a status of 400
+
+The broken Supabase queries are:
+
+rhppcequuhnfovcerqih.supabase.co/rest/v1/subscriptions?select=*&provider_id=eq.d723d043-96be-4f2b-b40e-49ed96f1cb3f&order=created_at.desc&limit=1
+
+rhppcequuhnfovcerqih.supabase.co/rest/v1/subscriptions?select=*&user_id=eq.cd96fb1e-caa9-4216-b406-0f522f78e400&order=created_at.desc&limit=1
+
+rhppcequuhnfovcerqih.supabase.co/rest/v1/subscriptions?select=*&provider_id=eq.cd96fb1e-caa9-4216-b406-0f522f78e400&order=created_at.desc&limit=1
+
+How to fix:
+Check whether the subscriptions table exists.
+Check whether user_id exists.
+Check whether provider_id exists.
+Check whether created_at exists.
+Check RLS policies.
+Check if the query is using the wrong table name or wrong column name.
+Check if the frontend is requesting provider_id when the table only has user_id or owner_id.
+Fix the smallest thing that makes the query correct.
+Do not hide the error. Fix the database/query mismatch properly.
+
+If the table needs both user_id and provider_id, add them.
+If the app only needs one owner column, update the query to match the actual schema.
+If RLS blocks reads, add safe RLS policies for the authenticated user.
+If created_at is missing, add it.
+If subscriptions should be connected to funeral homes/vendors, make the relationship correct.
+
+REFUNDS FEATURE
+
+Add refunds feature.
+
+Refunds must be real and connected to PayPal.
+Do not simulate refunds.
+Refunds must:
+- reference the original payment/capture
+- create a refund request or refund record
+- call PayPal refund API from backend
+- store refund status
+- handle PayPal refund webhook
+- notify involved users
+- send email if needed
+- update invoice/payment state correctly
+- prevent duplicate refund processing
+
+NOTIFICATION SYSTEM
+
+Build a complete notification system for the funeral platform.
+
+Every important business event must create a row in one notifications table.
+
+Use one notifications table with fields like:
+- id
+- user_id
+- type
+- title
+- body
+- entity_type
+- entity_id
+- deep_link
+- is_read
+- idempotency_key
+- created_at
+
+Create notifications for each of these:
+
+Bereaved sends request to home/vendor → notify that home/vendor.
+
+Home/vendor approves request → notify bereaved.
+
+Message sent between parties → notify the other party.
+
+Invoice sent → notify bereaved.
+
+Invoice paid → notify home/vendor and bereaved.
+
+Plan approved → notify home/vendor and bereaved.
+
+Booking updated or completed → notify all involved parties.
+
+Payment failed → notify the affected user and relevant provider if needed.
+
+Subscription cancelled/suspended/payment failed → notify affected user/provider.
+
+Refund completed → notify payer and provider.
+
+Dispute created/updated/resolved → notify relevant parties/admins.
+
+Use Supabase Realtime for browser and in-app updates.
+
+Support:
+- in-app toast
+- notification dropdown
+- unread badge
+- realtime updates using Supabase Realtime
+- unread/read state
+- mark one as read
+- mark all as read
+- notification filtering by user
+- notification counts
+- deep links to request, invoice, case, booking, payment, subscription, or message
+
+Device notifications:
+Use a Supabase database webhook on notifications INSERT.
+The webhook should trigger a Supabase Edge Function.
+The Edge Function should send push notifications to devices through a provider such as Expo, OneSignal, or FCM depending on the existing stack.
+
+Keep notification types structured.
+Do not mix payment events with request events.
+Make notifications reliable and idempotent.
+Duplicate events must not create duplicate push alerts.
+
+MESSAGING MODULE FIX
+
+Fix the messaging module in the popup of requests. It currently does not work.
+
+Make messaging work in:
+- request popup
+- PWA
+- web app
+
+Messaging must:
+- send messages correctly
+- show messages correctly
+- notify the other party
+- work in realtime if the existing stack supports realtime
+- keep conversations linked to the correct request/case/user/provider
+- not break existing request flow
+- work on mobile and desktop
+- work inside popup/modal UI
+- avoid duplicated messages
+
+If the issue is caused by modal state, user IDs, missing conversation ID, bad Supabase query, RLS, or broken component props, fix the exact cause.
+
+REQUEST APPROVAL FLOW
+
+Fix request approval flow.
+
+When a provider/home/vendor approves a request:
+- bereaved user must be notified
+- request status must update correctly
+- approved request must show in the correct place
+- notification must be created
+- email notification can be sent if enabled
+- activity log must record it
+- UI must update without needing manual refresh if realtime exists
+
+Current console log example:
+[Email Notification Sent] To: d723d043-96be-4f2b-b40e-49ed96f1cb3f | Subject: Request accepted | Body: Your request "Funeral Service Request: Bianca" has been accepted by the provider.
+
+How to fix:
+This looks like the email system may be sending to a user UUID instead of an email address. Find where email notification receives recipient value. Make sure it resolves the actual user email from Supabase auth/profile table before sending. Do not send emails to UUIDs. Keep notification rows using user_id, but email delivery must use email address.
+
+TRIAL AND SUBSCRIPTION ACCESS CONTROL
+
+Fix trial/subscription access.
+
+If a user trial ends:
+- grayscale restricted areas
+- user can only view but not do actions
+- disable actions like create, approve, send, edit, delete, publish, request, invoice, etc
+- billing page must remain active
+- user must still be able to pay
+- user must still access subscription/billing page
+- do not lock them out completely
+- show a clear message that trial has ended and payment is needed
+
+Subscription check must work for both user_id and provider_id depending on the user type.
+Fix the current subscriptions 400 errors.
+Make subscription status reliable.
+
+DELETE FUNCTIONS
+
+Fix delete memorial.
+Fix delete request.
+
+They must:
+- check permissions
+- delete or soft-delete correctly based on existing logic
+- update UI after delete
+- avoid orphaned related records where necessary
+- not break foreign key constraints
+- not fail silently
+- show success/error clearly
+- respect RLS policies
+
+Do not rewrite the entire module. Fix the broken delete logic.
+
+PWA AND ICONS
+
+Set favicon to the uploaded image.
+Set PWA app icon to the uploaded image.
+
+Make sure:
+- favicon appears in browser tab
+- manifest icons are updated
+- PWA install icon is updated
+- correct icon sizes are generated if needed
+- app still builds correctly
+- no broken asset path
+
+SECURITY AND PRODUCTION REQUIREMENTS
+
+Make payment security top priority.
+
+Do not expose PayPal secrets, SMTP secrets, Supabase service role keys, or private credentials in frontend code.
+
+Backend-only secrets must stay in environment variables.
+
+PayPal webhook verification must happen before database updates.
+
+SMTP must be server-side only.
+
+Supabase RLS must be safe.
+
+Users must only access their own notifications, requests, messages, invoices, payments, and subscriptions unless they are an authorized provider/admin involved in the case.
+
+Protect API endpoints from:
+- missing auth
+- bad input
+- duplicate webhook events
+- fake payment updates
+- direct frontend payment status changes
+- unauthorized access
+- unsafe deletes
+- cross-user data leaks
+
+Do not rely on frontend state for payment truth.
+Database should be updated from verified backend events.
+
+FINAL DELIVERY REQUIREMENTS
+
+After fixing, confirm:
+- what files changed
+- what database migrations were added
+- what environment variables are required
+- what bugs were fixed
+- what payment events are supported
+- what notification events are supported
+- what auth pages were added/fixed
+- how to test PayPal webhook
+- how to test forgot password
+- how to test Google login
+- how to test notifications
+- how to test request approval
+- how to test messaging popup
+- how to test subscription trial lock
+- how to test delete memorial and delete request
+
+Keep the changes small and literal.
+Do not change anything not requested.
+Do not add random features.
+Do not add placeholders.
+Do not leave incomplete code.
+Do not say “this should work” unless it has been made ready to run.
+  then push to  github main branch in repo https://github.com/EMN90909/strut.git
+=======
+In admin panel make it to be 
+---------admin/ ---> admin dashboard (sees all homes/vendors)
+------------/dashboard.tsx  -> total revenue, all homes, all families, all bereaved
+------------/homes.tsx  -->	ALL funeral homes, change plans, upgrade/downgrade, suspend, delete
+------------/families.tsx  -->	ALL bereaved families, view history, ban/unban, delete
+------------/settings.tsx  --> change personalisation, password, delete account
+------------/reports.tsx  -->TOTAL revenue, revenue per home, export PDF/Excel
+------------/payments.tsx  -->ALL payments, PayPal transactions, refunds, charges per home
+------------/plans.tsx  -->	Change homes/families plans (free to paid), set pricing
+------------/ban.tsx  -->	Ban/unban users (homes, families, staff), restore user
+------------/marketing.tsx  -->Turn all campaigns on/off, set start/end times, activate
+------------/customise.tsx  -->to add info in help page like things to find
+------------/marketing/milestones.tsx  -->bookings done by setting = number of days set
+------------/marketing/streak.tsx  -->days active = number of days set
+------------/marketing/leaderboard.tsx  -->Top 5 vendors/month = number of days set
+------------/marketing/seasonal.tsx  -->bookings festive = number of days set
+------------/marketing/growth.tsx  -->Onboard staff = number of days set
+------------/marketing/referral.tsx  -->Referral to families
+------------/marketing/loyalty.tsx  -->events = free Pro (On/Off, start/end)
+------------/marketing/feedback.tsx  -->Verified feedback 
+------------/marketing/community.tsx  -->Inviting vendors
+Also in admin add like 
+Jamila an AI that uses gemini 2.0 flash,openrouter, deepseek to AI auto-drafts campaigns, summarizes analytics, search families,homes and bereaved, change plans of them also and will run it auto-generates revenue reports sends to gemini, deepseek, openrouter
+then forAI can change, plan of user if instructed, delete, ban and all using
+-- ============================================
+-- BAN USER FUNCTION (Admin Only)
+-- ============================================
+CREATE OR REPLACE FUNCTION ban_user(
+  target_user_id UUID,
+  reason TEXT DEFAULT NULL
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID := auth.uid();
+BEGIN
+  -- Check if caller is admin
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE id = current_user_id AND role = 'admin'
+  ) THEN
+    RAISE EXCEPTION 'Only admins can ban users';
+  END IF;
+  
+  -- Prevent admin from banning themselves
+  IF target_user_id = current_user_id THEN
+    RAISE EXCEPTION 'You cannot ban yourself';
+  END IF;
+  
+  -- Ban the user
+  UPDATE public.profiles
+  SET 
+    is_banned = true,
+    ban_reason = reason,
+    banned_at = NOW(),
+    updated_at = NOW()
+  WHERE id = target_user_id;
+  
+  -- Revoke all user sessions
+  DELETE FROM auth.sessions WHERE user_id = target_user_id;
+  
+  -- Log the ban
+  INSERT INTO public.admin_logs (
+    action,
+    target_user_id,
+    details,
+    performed_by
+  ) VALUES (
+    'user_ban',
+    target_user_id,
+    jsonb_build_object('reason', reason),
+    current_user_id
+  );
+END;
+$$;
+
+-- ============================================
+-- UNBAN USER FUNCTION (Admin Only)
+-- ============================================
+CREATE OR REPLACE FUNCTION unban_user(
+  target_user_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID := auth.uid();
+BEGIN
+  -- Check if caller is admin
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE id = current_user_id AND role = 'admin'
+  ) THEN
+    RAISE EXCEPTION 'Only admins can unban users';
+  END IF;
+  
+  -- Unban the user
+  UPDATE public.profiles
+  SET 
+    is_banned = false,
+    ban_reason = NULL,
+    banned_at = NULL,
+    updated_at = NOW()
+  WHERE id = target_user_id;
+  
+  -- Log the unban
+  INSERT INTO public.admin_logs (
+    action,
+    target_user_id,
+    details,
+    performed_by
+  ) VALUES (
+    'user_unban',
+    target_user_id,
+    jsonb_build_object(),
+    current_user_id
+  );
+END;
+$$;
+
+-- ============================================
+-- REQUEST ACCOUNT DELETION (Soft Delete - No Hard Delete)
+-- User requests, admin approve
+-- ============================================
+CREATE OR REPLACE FUNCTION request_account_deletion()
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID := auth.uid();
+BEGIN
+  -- Check if user is logged in
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'You must be logged in to request account deletion';
+  END IF;
+  
+  -- Mark account for deletion (soft delete)
+  UPDATE public.profiles
+  SET 
+    deletion_requested_at = NOW(),
+    updated_at = NOW()
+  WHERE id = current_user_id;
+  
+  -- Log the deletion request
+  INSERT INTO public.admin_logs (
+    action,
+    target_user_id,
+    details,
+    performed_by
+  ) VALUES (
+    'deletion_requested',
+    current_user_id,
+    jsonb_build_object(),
+    current_user_id
+  );
+END;
+$$;
+
+-- ============================================
+-- APPROVE ACCOUNT DELETION (Admin Only - Soft Delete Only)
+-- ============================================
+CREATE OR REPLACE FUNCTION approve_account_deletion(
+  target_user_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID := auth.uid();
+BEGIN
+  -- Check if caller is admin
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE id = current_user_id AND role = 'admin'
+  ) THEN
+    RAISE EXCEPTION 'Only admins can approve account deletions';
+  END IF;
+  
+  -- Soft delete the account (mark as deleted, don't remove from database)
+  UPDATE public.profiles
+  SET 
+    deleted_at = NOW(),
+    deletion_requested_at = NULL,
+    updated_at = NOW()
+  WHERE id = target_user_id;
+  
+  -- Log the deletion approval
+  INSERT INTO public.admin_logs (
+    action,
+    target_user_id,
+    details,
+    performed_by
+  ) VALUES (
+    'deletion_approved',
+    target_user_id,
+    jsonb_build_object(),
+    current_user_id
+  );
+END;
+$$;
+
+-- ============================================
+-- CANCEL DELETION REQUEST (User Can Cancel Before Admin Approves)
+-- ============================================
+CREATE OR REPLACE FUNCTION cancel_deletion_request()
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID := auth.uid();
+BEGIN
+  -- Check if user is logged in
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'You must be logged in to cancel deletion request';
+  END IF;
+  
+  -- Cancel the deletion request
+  UPDATE public.profiles
+  SET 
+    deletion_requested_at = NULL,
+    updated_at = NOW()
+  WHERE id = current_user_id AND deleted_at IS NULL;
+END;
+$$;
+
+-- ============================================
+-- GRANT PERMISSIONS
+-- ============================================
+GRANT EXECUTE ON FUNCTION ban_user(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION unban_user(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION request_account_deletion() TO authenticated;
+GRANT EXECUTE ON FUNCTION approve_account_deletion(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION cancel_deletion_request() TO authenticated;
+Ban User:
+sql
+SELECT ban_user('user-uuid-here', 'Violated terms');
+Unban User:
+sql
+SELECT unban_user('user-uuid-here');
+User Requests Deletion:
+sql
+SELECT request_account_deletion();
+Admin Approves Deletion (Soft Delete Only):
+sql
+SELECT approve_account_deletion('user-uuid-here');
+User Cancels Deletion Request:
+sql
+SELECT cancel_deletion_request();
+ then still in admin panel make  the part of marketing
+Turn referral, milestone, streak, leaderboard, seasonal, loyalty, growth, community, and feedback rewards on or off.
+
+Milestone Unlocks
+
+Vendors who complete 50 bookings unlock 2 weeks of Pro Plan.
+
+Reward: 14 Pro day(s)
+
+On
+Turn Off
+Streak Bonuses
+
+Maintain 30 days of active usage and earn 5 bonus days of Pro Plan.
+
+Reward: 5 Pro day(s)
+
+On
+Turn Off
+Leaderboard Incentives
+
+Top 5 vendors each month get Pro Plan extensions.
+
+Reward: 7 Pro day(s)
+
+On
+Turn Off
+Seasonal Challenges
+
+During festive seasons, complete set goals such as 20 bookings to earn Pro Plan time.
+
+Reward: 7 Pro day(s)
+
+On
+Turn Off
+Vendor Growth Bonus
+
+Vendors who onboard 5 new staff through the dashboard earn Pro Plan credits.
+
+Reward: 7 Pro day(s)
+
+On
+Turn Off
+Referral Rewards
+
+Refer Struta to 10 families and earn 1 week of Pro Plan free.
+
+Reward: 7 Pro day(s)
+
+Off
+Turn On
+Family Loyalty
+
+Families who use Struta for 3 or more events get a free Pro upgrade for their next booking.
+
+Reward: 7 Pro day(s)
+
+Off
+Turn On
+Feedback Rewards
+
+Submit verified feedback or feature requests and earn Pro Plan credits.
+
+Reward: 3 Pro day(s)
+
+Off
+Turn On
+Community Builder
+
+Vendors who invite 3 other vendors to join Struta unlock Pro Plan days.
+
+Reward: 7 Pro day(s)
+
+Off
+Turn On
+work and not placeholders when turned on asks for start time and finish time then activates and when activated the homes/vendors will get the campaogns and that works of
+
+
+Milestone Unlocks
+-Vendors who complete 50 bookings unlock 2 weeks of Pro Plan
+-Reward: 14 Pro day(s)
+
+
+Streak Bonuses
+-Maintain 30 days of active usage and earn 5 bonus days of Pro Plan.
+-Reward: 5 Pro day(s)
+
+Leaderboard Incentives
+-Top 5 vendors each month get Pro Plan extensions.
+-Reward: 7 Pro day(s)
+
+Seasonal Challenges
+-During festive seasons, complete set goals such as 20 bookings to earn Pro Plan time.
+-Reward: 7 Pro day(s)
+
+Vendor Growth Bonus
+-Vendors who onboard 5 new staff through the dashboard earn Pro Plan credits.
+-Reward: 7 Pro day(s)
+
+Referral Rewards
+-Refer Struta to 10 families and earn 1 week of Pro Plan free.
+-Reward: 7 Pro day(s)
+
+Family Loyalty
+-Families who use Struta for 3 or more events get a free Pro upgrade for their next booking.
+-Reward: 7 Pro day(s)
+
+Feedback Rewards
+-Submit verified feedback or feature requests and earn Pro Plan credits.
+-Reward: 3 Pro day(s)
+
+Community Builder
+-Vendors who invite 3 other vendors to join Struta unlock Pro Plan days.
+-Reward: 7 Pro day(s)
+
+Then in marketing place remove the Pending verifications remove it there
+Then in the Menu in Requests and  User & Provider Directory in admin panel, place make it read both homes, vendors and bereaved families and make if change plan make it be like
+if admin chaned plan to paid plan it Runs the sql to that user being:
+-- Change to PRO
+CREATE OR REPLACE FUNCTION change_user_to_pro(user_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  PERFORM change_user_plan(user_id, 'pro');
+END;
+$$;
+
+-- Change to FREE
+CREATE OR REPLACE FUNCTION change_user_to_free(user_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  PERFORM change_user_plan(user_id, 'free');
+END;
+$$;
+For that specific User changed and it goes back to free plan after 30 days but also when vendor,home, bereaved pays with paypal it automatically changes,  and if user is banned
+-- ============================================
+-- BAN USER FUNCTION (Admin Only)
+-- ============================================
+CREATE OR REPLACE FUNCTION ban_user(
+  target_user_id UUID,
+  reason TEXT DEFAULT NULL
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID := auth.uid();
+BEGIN
+  -- Check if caller is admin
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE id = current_user_id AND role = 'admin'
+  ) THEN
+    RAISE EXCEPTION 'Only admins can ban users';
+  END IF;
+  
+  -- Prevent admin from banning themselves
+  IF target_user_id = current_user_id THEN
+    RAISE EXCEPTION 'You cannot ban yourself';
+  END IF;
+  
+  -- Ban the user
+  UPDATE public.profiles
+  SET 
+    is_banned = true,
+    ban_reason = reason,
+    banned_at = NOW(),
+    updated_at = NOW()
+  WHERE id = target_user_id;
+  
+  -- Revoke all user sessions
+  DELETE FROM auth.sessions WHERE user_id = target_user_id;
+  
+  -- Log the ban
+  INSERT INTO public.admin_logs (
+    action,
+    target_user_id,
+    details,
+    performed_by
+  ) VALUES (
+    'user_ban',
+    target_user_id,
+    jsonb_build_object('reason', reason),
+    current_user_id
+  );
+END;
+$$;
+
+-- ============================================
+-- UNBAN USER FUNCTION (Admin Only)
+-- ============================================
+CREATE OR REPLACE FUNCTION unban_user(
+  target_user_id UUID
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID := auth.uid();
+BEGIN
+  -- Check if caller is admin
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE id = current_user_id AND role = 'admin'
+  ) THEN
+    RAISE EXCEPTION 'Only admins can unban users';
+  END IF;
+  
+  -- Unban the user
+  UPDATE public.profiles
+  SET 
+    is_banned = false,
+    ban_reason = NULL,
+    banned_at = NULL,
+    updated_at = NOW()
+  WHERE id = target_user_id;
+  
+  -- Log the unban
+  INSERT INTO public.admin_logs (
+    action,
+    target_user_id,
+    details,
+    performed_by
+  ) VALUES (
+    'user_unban',
+    target_user_id,
+    jsonb_build_object(),
+    current_user_id
+  );
+END;
+$$;
+
+-- ============================================
+-- DELETE ACCOUNT FUNCTION (User or Admin)
+-- ============================================
+CREATE OR REPLACE FUNCTION delete_account(
+  target_user_id UUID DEFAULT NULL
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID := auth.uid();
+  user_to_delete UUID := COALESCE(target_user_id, current_user_id);
+BEGIN
+  -- If no target_user_id provided, user is deleting their own account
+  IF target_user_id IS NULL THEN
+    user_to_delete := current_user_id;
+  END IF;
+  
+  -- Check permissions
+  IF target_user_id IS NOT NULL THEN
+    -- Admin deleting another user
+    IF NOT EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE id = current_user_id AND role = 'admin'
+    ) THEN
+      RAISE EXCEPTION 'Only admins can delete other users';
+    END IF;
+  ELSE
+    -- User deleting own account - check authentication
+    IF current_user_id IS NULL THEN
+      RAISE EXCEPTION 'You must be logged in to delete your account';
+    END IF;
+  END IF;
+  
+  -- Prevent admin from deleting themselves
+  IF user_to_delete = current_user_id AND target_user_id IS NULL THEN
+    -- This is fine (user deleting own account)
+  ELSIF user_to_delete = current_user_id THEN
+    RAISE EXCEPTION 'You cannot delete your own account. Contact support.';
+  END IF;
+  
+  -- Mark as deleting (soft delete first)
+  UPDATE public.profiles
+  SET 
+    deleted_at = NOW(),
+    updated_at = NOW()
+  WHERE id = user_to_delete;
+  
+  -- Delete user data from related tables (cascade will handle most)
+  DELETE FROM public.notifications WHERE user_id = user_to_delete;
+  DELETE FROM public.subscriptions WHERE user_id = user_to_delete;
+  DELETE FROM public.admin_logs WHERE target_user_id = user_to_delete;
+  
+  -- Delete from auth.users (hard delete)
+  DELETE FROM auth.users WHERE id = user_to_delete;
+  
+  -- Log the deletion
+  INSERT INTO public.admin_logs (
+    action,
+    target_user_id,
+    details,
+    performed_by
+  ) VALUES (
+    'account_delete',
+    user_to_delete,
+    jsonb_build_object(
+      'deleted_by', 
+      CASE WHEN target_user_id IS NULL THEN 'self' ELSE 'admin' END
+    ),
+    current_user_id
+  );
+END;
+$$;
+
+-- ============================================
+-- GRANT PERMISSIONS
+-- ============================================
+GRANT EXECUTE ON FUNCTION ban_user(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION unban_user(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION delete_account(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION delete_account() TO authenticated;
+and 
+Ban a User:
+sql
+-- Ban with reason
+SELECT ban_user('user-uuid-here', 'Violated terms of service');
+
+-- Ban without reason
+SELECT ban_user('user-uuid-here');
+Unban a User:
+sql
+SELECT unban_user('user-uuid-here');
+Delete Account (Admin Deletes User):
+sql
+SELECT delete_account('user-uuid-here');
+Delete Account (User Deletes Own):
+sql
+SELECT delete_account();
+
+thats for that page also remove the require admin access when in Admin page
+-Financial page overview make it load balance from paypal and adds total plus manual payment
+
+const axios = require('axios');
+
+// Get PayPal balance
+const response = await axios.get(
+  'https://api.paypal.com/v1/reporting/balances',
+  {
+    headers: {
+      'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    }
+  }
+);
+
+console.log(response.data.balances);
+and adds for the manual payment also and can print out or CSV and uses AI api Key to make report summary and all
+Then in Admin ERP overview make Trial & Subscription Tracking area to be realtime no placeholders
+
+THEN IN HOMES/VENDOR PAGES WHERE BIG WORK TO BE DONE
+When adding staff and creating link it says permision denied for schema public
+and consoles says
+Failed to load resource: the server responded with a status of 500 ()
+fix that make it create link and all
+Then in staff pages build this dashboards to be
+/staffs
+-----/pages
+-------auth.tsx  -> sign in page and also where the link of staff login will come so they sign in to enter respective dashboard 
+---------secretary/ ---> secretary dashboard
+------------/dashboard.tsx  -> where the staff secretary will come when they sign in the page will be
+------------/cases.tsx  -->	Only cases assigned to them
+------------/settings.tsx  --> change personalisation and change password, delete account
+------------/tasks.tsx  --> communicate/Call family, update case notes, confirm burial details
+------------/taskdetails.tsx  -->Case name, family contact info (phone/email), due time, status
+------------/schedule.tsx  -->week's funerals count, tasks per day
+------------/messages.tsx --->Case-specific chat messages from Admin/Coordinator
+---------driver/ ---> driver dashboard
+------------/dashboard.tsx  -> where the staff driver will come when they sign in the page will be
+------------/cases.tsx  -->	Only cases with transport tasks assigned
+------------/settings.tsx  --> change personalisation and change password, delete account
+------------/tasks.tsx  --> transport tasks (pickup, destination, vehicle status)
+------------/taskdetails.tsx  -->Case name, pickup location/time, destination, vehicle, status
+------------/schedule.tsx  -->week's transport tasks count, tasks per day
+------------/vehicles.tsx  -->Only assigned vehicles, update status (Available/In Use/Done)
+------------/messages.tsx --->Case-specific chat messages from Admin/Coordinator
+---------embalmer/ ---> embalmer dashboard
+------------/dashboard.tsx  -> where the staff embalmer will come when they sign in the page will be
+------------/cases.tsx  -->	Only cases with embalming tasks assigned
+------------/settings.tsx  --> change personalisation and change password, delete account
+------------/tasks.tsx  --> embalming tasks (Pending/In Progress/Completed)
+------------/taskdetails.tsx  -->Case name, deceased info, mortuary room, status, priority
+------------/schedule.tsx  -->week's embalming tasks count, tasks per day
+------------/messages.tsx --->Case-specific chat messages from Admin/Coordinator
+---------coordinator/ ---> coordinator dashboard
+------------/dashboard.tsx  -> where the staff coordinator will come when they sign in the page will be
+------------/cases.tsx  -->	ALL cases (not just assigned)
+------------/settings.tsx  --> change personalisation and change password, delete account
+------------/tasks.tsx  --> ALL tasks across all staff
+------------/taskdetails.tsx  -->Case name, assigned staff, task type, due time, status
+------------/schedule.tsx  -->ALL upcoming funerals, tasks per day across all staff
+------------/requests.tsx  -->ALL incoming client requests (Accept/Reject)
+------------/staffoverview.tsx  -->Each staff's pending tasks count, activity
+------------/messages.tsx --->ALL case-specific chat messages (all cases)
+so that when staff logs in it takes them to the respective pages  and the way the requests will be processed is
+MANAGER
+│
+├── Can: Invite staff, Create cases,Assign tasks,View ALL,Reports,Vehicles,Delete,Respond to family requests,send planning board to family 
+├── Cannot: Nothing (full access)
+│
+└── Gives: Invite link, cases, tasks, dashboard access to staff, send invoices to bereaved
+
+│
+▼
+
+STAFF (Secretary/Driver/Embalmer/Coordinator/Planning Board)
+│
+├── Can: View assigned, Update own tasks, Add notes, Chat, Change password, Respond to requests (Coordinator + Planning Board only)
+├── Cannot: Invite staff, View reports, See others' tasks, Delete cases
+│
+└── Reports to: Manager
+
+│
+▼
+
+FLOW
+
+Manager creates case → Assigns to staff → Staff gets notification → Staff updates → Manager sees instantly
+Family submits request → Manager + Coordinator + Planning Board see → Respond/Accept/Reject
+
+│
+▼
+
+PERMISSION
+
+Feature               | Manager | Coordinator | Planning Board | Other Staff
+──────────────────────┼─────────┼─────────────┼────────────────┼───────────
+Invite staff          |    ✅   |      ❌     |       ❌       |     ❌
+Create case           |    ✅   |      ❌     |       ❌       |     ❌
+View ALL cases        |    ✅   |      ✅     |       ✅       |     ❌*
+Respond to requests   |    ✅   |      ✅     |       ✅       |     ❌
+Update tasks          |    ✅   |      ✅     |       ✅       |     ✅
+View reports          |    ✅   |      ❌     |       ❌       |     ❌
+Delete cases          |    ✅   |      ❌     |       ❌       |     ❌
+Chat                  |    ✅   |      ✅     |       ✅       |     ✅
+
+then for manager-----> the person who signed up for the home/vendor and adds staff make page be
+---------manager/ ---> manager dashboard
+------------/dashboard.tsx  -> where the manager will come when they sign in the page will be
+------------/cases.tsx  -->	ALL cases (view, create, update, delete any case)
+------------/settings.tsx  --> change personalisation, change password, delete account, change general code
+------------/tasks.tsx  --> ALL tasks across all staff, assign tasks, reassign tasks, mark complete
+------------/taskdetails.tsx  -->Case name, assigned staff, task type, due time, status, full task history
+------------/schedule.tsx  -->ALL upcoming funerals, tasks per day across all staff, staff availability
+------------/messages.tsx  --->ALL case-specific chat messages (all cases), direct message any staff and team chat so there make it show bereaved name to chat or staff
+------------/staff.tsx  -->	ALL staff members, invite staff, remove staff, view staff activity, assign roles
+------------/requests.tsx  -->ALL incoming family requests (Accept/Reject/Respond), view request history
+------------/reports.tsx  -->Revenue dashboard, staff performance, vehicle usage, case history, export PDF/Excel
+------------/vehicles.tsx  -->ALL vehicles, add vehicles, assign vehicle + driver to case, view usage reports
+------------/billing.tsx  -->Pay for home/vendor subscription, payment history, invoices to send to family bereaved, upgrade plan, PayPal integration, billing settings, add payment method, view charges
+then in help section add a back button that takes you to page you were and if signed in make it show profile avatar then fix
+04 (Not Found)
+(anonymous) @ index-bN19qDVk.js:33
+(anonymous) @ index-bN19qDVk.js:33
+await in (anonymous)
+(anonymous) @ index-bN19qDVk.js:10
+then @ index-bN19qDVk.js:10
+postMessage
+D @ index-bN19qDVk.js:1
+ee @ index-bN19qDVk.js:1
+postMessage
+D @ index-bN19qDVk.js:1
+ee @ index-bN19qDVk.js:1
+postMessage
+D @ index-bN19qDVk.js:1
+e.unstable_scheduleCallback @ index-bN19qDVk.js:1
+hd @ index-bN19qDVk.js:8
+md @ index-bN19qDVk.js:8
+(anonymous) @ index-bN19qDVk.js:8
+index-bN19qDVk.js:77 Failed to load help center articles: {code: 'PGRST205', details: null, hint: "Perhaps you meant the table 'public.erp_vehicles'", message: "Could not find the table 'public.help_center_articles' in the schema cache"}
+then in payment fix
+Tracking Prevention blocked access to storage for <URL>.
+operations/billing:1 Tracking Prevention blocked access to storage for https://www.paypal.com/sdk/js?currency=USD&intent=capture.
+operations/billing:1 Tracking Prevention blocked access to storage for https://www.paypal.com/sdk/js?currency=USD&intent=capture.
+operations/billing:1 Tracking Prevention blocked access to storage for https://www.paypal.com/sdk/js?currency=USD&intent=capture.
+operations/billing:1 Tracking Prevention blocked access to storage for https://www.paypal.com/sdk/js?currency=USD&intent=capture.
+operations/billing:1 Tracking Prevention blocked access to storage for https://www.paypal.com/sdk/js?currency=USD&intent=capture.
+operations/billing:1 Tracking Prevention blocked access to storage for https://www.paypal.com/sdk/js?currency=USD&intent=capture.
+operations/billing:1 Tracking Prevention blocked access to storage for https://www.paypal.com/sdk/js?currency=USD&intent=capture.
+operations/billing:1 Tracking Prevention blocked access to storage for https://www.paypal.com/sdk/js?currency=USD&intent=capture.
+index-bN19qDVk.js:79  GET https://www.paypal.com/sdk/js?currency=USD&intent=capture net::ERR_ABORTED 400 (Bad Request)
+aT @ index-bN19qDVk.js:79
+(anonymous) @ index-bN19qDVk.js:79
+fT @ index-bN19qDVk.js:79
+dT @ index-bN19qDVk.js:79
+(anonymous) @ index-bN19qDVk.js:79
+Uc @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Xu @ index-bN19qDVk.js:8
+Yu @ index-bN19qDVk.js:8
+qu @ index-bN19qDVk.js:8
+Wu @ index-bN19qDVk.js:8
+Tu @ index-bN19qDVk.js:8
+wu @ index-bN19qDVk.js:8
+_d @ index-bN19qDVk.js:8
+fd @ index-bN19qDVk.js:8
+md @ index-bN19qDVk.js:8
+(anonymous) @ index-bN19qDVk.js:8
+index-bN19qDVk.js:79 Failed to load the PayPal JS SDK script. Error: The script "https://www.paypal.com/sdk/js?currency=USD&intent=capture" failed to load. Check the HTTP status code and response body in DevTools to learn more.
+(anonymous) @ index-bN19qDVk.js:79
+Promise.catch
+(anonymous) @ index-bN19qDVk.js:79
+Uc @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Xu @ index-bN19qDVk.js:8
+Yu @ index-bN19qDVk.js:8
+qu @ index-bN19qDVk.js:8
+Wu @ index-bN19qDVk.js:8
+Tu @ index-bN19qDVk.js:8
+wu @ index-bN19qDVk.js:8
+_d @ index-bN19qDVk.js:8
+fd @ index-bN19qDVk.js:8
+md @ index-bN19qDVk.js:8
+(anonymous) @ index-bN19qDVk.js:8
+so fixPlease fix the PayPal JS SDK loading error. The browser is blocking storage because of Tracking Prevention, and the script URL https://www.paypal.com/sdk/js?currency=USD&intent=capture is missing the required PayPal client-id. Clear PayPal cookies, allow PayPal in tracking prevention or use a different browser, and load the SDK with the full correct URL
+
+And for help center make it be for AI rules to follow before sending request to send request to API with
+═══════════════════════════════════════════════════════
+  STRUTA AI: TECHNICAL INSTRUCTIONS FOR DEVELOPERS
+═══════════════════════════════════════════════════════
+
+AI MODEL:
+• AI to be gemini, openrouter, deepseek
+• System prompt: "You are Jamila, a helpful assistant for 
+  East Africa's funeral platform. Be compassionate, clear, 
+  and provide step-by-step answers using articles from the 
+  Help Center."
+
+KNOWLEDGE SOURCE:
+• AI should ONLY use information from Help Center articles
+• If answer not in articles, say: "I don't have that 
+  information. Let me connect you to human support."
+• Do NOT make up answers
+
+RESPONSE FORMAT:
+• Use clear headings (##)
+• Use step-by-step lists (1. 2. 3.)
+• Use bold for important items (**important**)
+• Use emojis sparingly (📞 💬 ✅ ❌)
+• Keep responses under 500 words
+
+FALLBACK:
+• If AI can't answer after 2 attempts, show:
+  "I'm sorry I couldn't help. Contact our customer support:
+  📧 info@emtra.top
+  💬 WhatsApp: +254 787073955X"
+
+LANGUAGES:
+• Primary: English
+• Secondary: Swahili (translate AI responses)
+• Future: French (Rwanda), Portuguese (Mozambique)
+
+PRIVACY:
+• NEVER ask for passwords or payment info
+• NEVER access user account data
+• Always remind users: "Never share your password"
+
+TONE GUIDE:
+• Compassionate: "I understand this is difficult..."
+• Patient: "Let me explain this step-by-step..."
+• Professional: "Here's how to..."
+• Culturally sensitive: Acknowledge East African funeral customs
+then make jamila also be a floating icon if clicked can ask questions and all this is in home/vendor and in staff also can use being
+SECRETARY: AI auto-drafts family messages, summarizes call notes, auto-replies to common questions
+DRIVER: AI auto-drafts transport updates, summarizes deliveries, auto-replies to transport inquiries
+EMBALMER: AI auto-drafts embalming notes, summarizes procedures, auto-replies to status inquiries
+COORDINATOR: AI auto-drafts task assignments, summarizes case progress, suggests next task
+PLANNING BOARD: AI auto-drafts event confirmations, summarizes schedules, auto-replies to scheduling requests
+MANAGER: AI auto-drafts family responses, summarizes staff performance, auto-generates reports, auto-replies to inquiries
+ALL ROLES: AI drafts messages, summarizes text, translates text, extracts info (phone/email/dates) from text
+but limit to 5 responses daily and can pay 5 usd extra to get more credits (1 response=1 credit) so i AI uses gemini 2.0 flash and maximum is 1000 tokens so if paid 5 usd get 400 credits /daily so make a system that limits it  and paid separately from pro plan so add that in billing page
+
+Thats for the HOME/VENDOR and general help center 
+
+FOR THE BEREAVED dash fix the
+index-bN19qDVk.js:33 [Web Push] Subscription skipped or not configured: Error: Failed to execute 'subscribe' on 'PushManager': The provided applicationServerKey is not valid.
+    at pushClient-DNEQRj6W.js:1:1361
+    at async t.subscribeUser (pushClient-DNEQRj6W.js:1:1159)
+    at async Kg (index-bN19qDVk.js:33:52643)
+    at async qg (index-bN19qDVk.js:33:52886)
+Kg @ index-bN19qDVk.js:33
+await in Kg
+qg @ index-bN19qDVk.js:33
+await in qg
+(anonymous) @ index-bN19qDVk.js:77
+Uc @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Xu @ index-bN19qDVk.js:8
+Yu @ index-bN19qDVk.js:8
+_d @ index-bN19qDVk.js:8
+fd @ index-bN19qDVk.js:8
+qu @ index-bN19qDVk.js:8
+Wu @ index-bN19qDVk.js:8
+Tu @ index-bN19qDVk.js:8
+wu @ index-bN19qDVk.js:8
+gd @ index-bN19qDVk.js:8
+ee @ index-bN19qDVk.js:1
+postMessage
+D @ index-bN19qDVk.js:1
+e.unstable_scheduleCallback @ index-bN19qDVk.js:1
+hd @ index-bN19qDVk.js:8
+md @ index-bN19qDVk.js:8
+(anonymous) @ index-bN19qDVk.js:8
+
+index-bN19qDVk.js:33 [Web Push] Subscription skipped or not configured: Error: Failed to execute 'subscribe' on 'PushManager': The provided applicationServerKey is not valid.
+    at pushClient-DNEQRj6W.js:1:1361
+    at async t.subscribeUser (pushClient-DNEQRj6W.js:1:1159)
+    at async Kg (index-bN19qDVk.js:33:52643)
+    at async qg (index-bN19qDVk.js:33:52886)
+make it work and able to push notifications
+then in the requests in invoice fix
+index-bN19qDVk.js:79  GET https://struta.onrender.com/api/payments/provider-profile/9a5fcc0b-b8c0-4ef1-935b-d69a79bfdc62 404 (Not Found)
+(anonymous) @ index-bN19qDVk.js:79
+(anonymous) @ index-bN19qDVk.js:79
+Uc @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Xu @ index-bN19qDVk.js:8
+Yu @ index-bN19qDVk.js:8
+qu @ index-bN19qDVk.js:8
+Wu @ index-bN19qDVk.js:8
+Tu @ index-bN19qDVk.js:8
+wu @ index-bN19qDVk.js:8
+_d @ index-bN19qDVk.js:8
+fd @ index-bN19qDVk.js:8
+md @ index-bN19qDVk.js:8
+(anonymous) @ index-bN19qDVk.js:8
+index-bN19qDVk.js:79  GET https://www.paypal.com/sdk/js?currency=KSh&intent=capture net::ERR_ABORTED 400 (Bad Request)
+aT @ index-bN19qDVk.js:79
+(anonymous) @ index-bN19qDVk.js:79
+fT @ index-bN19qDVk.js:79
+dT @ index-bN19qDVk.js:79
+(anonymous) @ index-bN19qDVk.js:79
+Uc @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Ol @ index-bN19qDVk.js:8
+kl @ index-bN19qDVk.js:8
+Xu @ index-bN19qDVk.js:8
+Yu @ index-bN19qDVk.js:8
+qu @ index-bN19qDVk.js:8
+Wu @ index-bN19qDVk.js:8
+Tu @ index-bN19qDVk.js:8
+wu @ index-bN19qDVk.js:8
+_d @ index-bN19qDVk.js:8
+fd @ index-bN19qDVk.js:8
+md @ index-bN19qDVk.js:8
+(anonymous) @ index-bN19qDVk.js:8
+index-bN19qDVk.js:79 Failed to load the PayPal JS SDK script. Error: The script "https://www.paypal.com/sdk/js?currency=KSh&intent=capture" failed to load. Check the HTTP status code and response body in DevTools to learn more.
+make paypal to work
+then in invoice make it show pay with paypal, Strpe (add stripe payment throught the web also add stripe in .env and it pays live account not sanbox) or shows payment info ohf home/vendor from name, till or paybill number
+then in chats of the menu in bereaved make it be like shows name of home and last message with it then if clicked brings full page chat not  requests page with the home/vendor and can click back to go back
+then the help page put in settings remove in menu bar 
+then in find home make the popup card take 3/4 of screen can click next ot swipe to see listing images
+then in notifications if clicked:
+Request planning complete---> takes to requests/planning board
+New message from {name_of_home/vendor} ---> takes to chats/{name of vendor/home} chat place
+invoice done--->request invoice
+
+and all then for HOME/VENDOR in overview details inside request make the family info also show phone number
+Then in copy link of share Struta to other people fix it because it says not found instead of working fix that
+
+GENERAL CHANGES TO ALL BEREAVED, HEMO, VENDOR pages
+Then make the i18n to work to change language in settings make languages be, swahili, english, luganda, Kinyarwanda, kirundi
+then fix the not found make it look nice not basic as it is
+in memorial, remove the button Back to Dashboard and make if bereaved clickes view it opens in new tab
+
+
+So clear all errors without  and
+From now on, you must act like Antigravity:
+
+Do exactly what I say, step by step, without adding or changing anything reasoned and found sollution
+Keep the form and structure of my code exactly as it is. Only change the code if found a straight forward way to “fix a bug”, “rewrite this part”, or “update this logic”.
+Never invent new functions, libraries, or features that I did not ask for.
+Never add placeholders, TODO, FIXME, example values, or incomplete code. All code must be ready to run as‑is, real time and working
+If something is unclear, reason, do it and run to ensure no issues
+Keep changes as small and literal as possible and run all changes to remove errors
+After each step, briefly list what you changed 
+I want you to behave like a precise coding assistant that follows instructions like Antigravity, not like a creative designer.
+
+Now repeat that behavior rule back to me in one sentence, then wait for my first task.
+then push to github main repo
+>>>>>>> 27c664b1d45a29cc8edb53409ba6d989ad026312

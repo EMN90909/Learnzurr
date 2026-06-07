@@ -1,0 +1,61 @@
+services:
+  - type: web
+    name: struta
+    runtime: node
+    plan: free
+    buildCommand: pnpm install && pnpm build
+    startCommand: pnpm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8081"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_PAYPAL_CLIENT_ID
+        sync: false
+      - key: VITE_PAYSTACK_PUBLIC_KEY
+        sync: false
+      - key: VITE_HCAPTCHA_SITEKEY
+        sync: false
+      - key: VITE_API_BASE_URL
+        value: /api
+      - key: VITE_APP_URL
+        sync: false
+      - key: VITE_VAPID_PUBLIC_KEY
+        sync: false
+      - key: VITE_ENABLE_WEB_PUSH
+        value: "true"
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_SECRET_KEY
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_EMAIL
+        value: mailto:info@emtra.top
+      - key: APP_URL
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false

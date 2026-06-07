@@ -1,0 +1,3 @@
+-- RLS migration applied in Supabase: enable_rls_all_public_tables.
+-- Verification query returned zero public tables without row level security.
+-- Keep table policies reviewed before exposing client access.

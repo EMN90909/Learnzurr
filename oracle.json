@@ -1,0 +1,50 @@
+{
+  "application": {
+    "name": "struta",
+    "description": "Struta funeral ecosystem",
+    "port": 8081,
+    "healthCheckPath": "/api/health"
+  },
+  "docker": {
+    "dockerfile": "Dockerfile",
+    "startCommand": "pnpm db:migrate && pnpm start"
+  },
+  "environment": {
+    "required": [
+      "DATABASE_URL",
+      "SUPABASE_URL",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "VITE_SUPABASE_URL",
+      "VITE_SUPABASE_ANON_KEY"
+    ],
+    "optional": [
+      "VITE_PAYPAL_CLIENT_ID",
+      "VITE_PAYSTACK_PUBLIC_KEY",
+      "VITE_HCAPTCHA_SITEKEY",
+      "VITE_API_BASE_URL",
+      "VITE_APP_URL",
+      "VITE_VAPID_PUBLIC_KEY",
+      "VITE_ENABLE_WEB_PUSH",
+      "PAYPAL_CLIENT_ID",
+      "PAYPAL_SECRET_KEY",
+      "PAYPAL_WEBHOOK_ID",
+      "VAPID_PUBLIC_KEY",
+      "VAPID_PRIVATE_KEY",
+      "VAPID_EMAIL",
+      "APP_URL",
+      "SMTP_HOST",
+      "SMTP_PORT",
+      "SMTP_USER",
+      "SMTP_PASS",
+      "SMTP_FROM"
+    ]
+  },
+  "pwa": {
+    "manifest": "/manifest.json",
+    "serviceWorker": "/sw.js",
+    "icons": ["/struta.png"]
+  },
+  "buildEnvironment": {
+    "note": "Set public VITE_* and NEXT_PUBLIC_* values as Oracle/OCI build arguments and runtime env vars. Vite embeds these values during pnpm run build; server secrets remain runtime-only."
+  }
+}

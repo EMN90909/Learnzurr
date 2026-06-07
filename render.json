@@ -1,0 +1,33 @@
+{
+  "name": "struta",
+  "type": "web",
+  "runtime": "node",
+  "buildCommand": "pnpm install && pnpm build",
+  "startCommand": "pnpm start",
+  "healthCheckPath": "/api/health",
+  "env": {
+    "NODE_VERSION": "22",
+    "PORT": "8081"
+  },
+  "requiredEnv": [
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "VITE_SUPABASE_URL",
+    "VITE_SUPABASE_ANON_KEY"
+  ],
+  "optionalEnv": [
+    "VITE_PAYPAL_CLIENT_ID",
+    "PAYPAL_CLIENT_ID",
+    "PAYPAL_SECRET_KEY",
+    "PAYPAL_WEBHOOK_ID",
+    "VAPID_PUBLIC_KEY",
+    "VAPID_PRIVATE_KEY",
+    "VAPID_EMAIL",
+    "APP_URL",
+    "SMTP_HOST",
+    "SMTP_PORT",
+    "SMTP_USER",
+    "SMTP_PASS",
+    "SMTP_FROM"
+  ]
+}

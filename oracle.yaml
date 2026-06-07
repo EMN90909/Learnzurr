@@ -1,0 +1,47 @@
+# Oracle Cloud / OCI container deployment reference for Struta
+version: "1.0"
+application:
+  name: struta
+  description: Struta funeral ecosystem — React + Express + Supabase
+  port: 8081
+  healthCheck:
+    path: /api/health
+    intervalSeconds: 30
+build:
+  dockerfile: Dockerfile
+  context: .
+run:
+  command: ["sh", "-c", "pnpm db:migrate && pnpm start"]
+environment:
+  required:
+    - DATABASE_URL
+    - SUPABASE_URL
+    - SUPABASE_SERVICE_ROLE_KEY
+    - VITE_SUPABASE_URL
+    - VITE_SUPABASE_ANON_KEY
+  optional:
+    - VITE_PAYPAL_CLIENT_ID
+    - VITE_PAYSTACK_PUBLIC_KEY
+    - VITE_HCAPTCHA_SITEKEY
+    - VITE_API_BASE_URL
+    - VITE_APP_URL
+    - VITE_VAPID_PUBLIC_KEY
+    - VITE_ENABLE_WEB_PUSH
+    - PAYPAL_CLIENT_ID
+    - PAYPAL_SECRET_KEY
+    - PAYPAL_WEBHOOK_ID
+    - VAPID_PUBLIC_KEY
+    - VAPID_PRIVATE_KEY
+    - VAPID_EMAIL
+    - APP_URL
+    - SMTP_HOST
+    - SMTP_PORT
+    - SMTP_USER
+    - SMTP_PASS
+    - SMTP_FROM
+notes:
+  - Use HTTPS in production for PWA and web push
+  - Provide public VITE_* values as OCI build arguments and runtime environment variables so `pnpm run build` can inject them into bundled JS
+  - Keep SUPABASE_SERVICE_ROLE_KEY, payment secrets, SMTP passwords, and other server secrets as runtime-only environment variables
+  - Run `npx web-push generate-vapid-keys` once and set VAPID_* env vars
+  - Migrations run automatically via `pnpm db:migrate` on container start
