@@ -1,8 +1,8 @@
 FROM node:20-alpine AS frontend
 WORKDIR /app/frontend
-COPY frontend/package.json frontend/package.json
-COPY frontend/svelte.config.js frontend/vite.config.ts frontend/tsconfig.json frontend/
-COPY frontend/src frontend/src
+COPY frontend/package.json ./package.json
+COPY frontend/svelte.config.js frontend/vite.config.ts frontend/tsconfig.json ./
+COPY frontend/src ./src
 RUN npm install && npm run build
 
 FROM golang:1.22-alpine AS backend
