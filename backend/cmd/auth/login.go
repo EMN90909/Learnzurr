@@ -109,16 +109,27 @@ func PinLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "security check failed", http.StatusForbidden)
 		return
 	}
-	username := strings.TrimSpace(req.Username)
+	username := strings.ToLower(strings.TrimSpace(req.Username))
 	if username == "" || len(username) > 80 || len(req.PIN) != 6 || security.ValidateTextInput(username) != nil {
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 		return
 	}
-	if !supabaseclient.NewFromEnv().AuthConfigured() {
+	client := supabaseclient.NewFromEnv()
+	if !client.DataConfigured() {
 		http.Error(w, "auth provider is not configured", http.StatusServiceUnavailable)
 		return
 	}
-	uid := userIDFrom(username)
+	rows, err := client.Select(r.Context(), "learner_profiles", "user_id,username,pin_hash", map[string]string{"username": "eq." + username}, 1)
+	if err != nil || len(rows) != 1 {
+		http.Error(w, "invalid credentials", http.StatusUnauthorized)
+		return
+	}
+	pinHash, _ := rows[0]["pin_hash"].(string)
+	uid, _ := rows[0]["user_id"].(string)
+	if uid == "" || pinHash == "" || !security.VerifyPIN(req.PIN, pinHash) {
+		http.Error(w, "invalid credentials", http.StatusUnauthorized)
+		return
+	}
 	accessToken, err := tokenFor(uid, "learner")
 	if err != nil {
 		http.Error(w, "token creation failed", http.StatusInternalServerError)
@@ -128,5 +139,5 @@ func PinLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "session creation failed", http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, map[string]any{"accessToken": accessToken, "expiresInSeconds": int(security.AccessTokenTTL.Seconds()), "user": map[string]any{"id": uid, "role": "learner", "name": "Learnzur Learner"}})
+	writeJSON(w, map[string]any{"accessToken": accessToken, "expiresInSeconds": int(security.AccessTokenTTL.Seconds()), "user": map[string]any{"id": uid, "role": "learner", "name": username}})
 }
