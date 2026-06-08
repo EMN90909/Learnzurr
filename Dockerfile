@@ -2,6 +2,7 @@ FROM node:20-alpine AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json ./package.json
 COPY frontend/svelte.config.js frontend/vite.config.ts frontend/tsconfig.json ./
+COPY frontend/static ./static
 COPY frontend/src ./src
 RUN npm install && npm run build
 
