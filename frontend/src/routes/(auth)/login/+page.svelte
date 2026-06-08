@@ -33,27 +33,28 @@
   }
 </script>
 
-<section class="page auth-form" style="max-width: 480px; margin: 4rem auto; display: flex; flex-direction: column; gap: 2rem;">
+<section class="page auth-form" style="max-width: 420px; margin: 4rem auto; display: flex; flex-direction: column; gap: 1.5rem;">
   <div style="text-align: center; display: flex; flex-direction: column; gap: 0.5rem;">
-    <h1 style="font-size: 2.5rem; font-weight: 900;">Welcome Back</h1>
-    <p class="muted">Secure access for parents, teachers, organizations, learners, and admins.</p>
+    <p class="eyebrow">Secure Portal</p>
+    <h1 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">Welcome Back</h1>
+    <p class="muted">Access your Learnzur dashboard securely.</p>
   </div>
 
-  <div class="card" style="display: flex; flex-direction: column; gap: 1.5rem; padding: 2rem;">
+  <div class="card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem;">
     <div class="tabs" style="display: flex; width: 100%; border-bottom: 1px solid #e2e8f0; margin-bottom: 1rem;">
       <button 
         class:active={tab === 'adult'} 
         on:click={() => tab = 'adult'}
-        style="flex: 1; text-align: center; padding: 0.75rem 0; font-weight: 600; border-bottom: 2px solid transparent; background: transparent; color: {tab === 'adult' ? '#0f766e' : '#64748b'}; border-bottom-color: {tab === 'adult' ? '#0f766e' : 'transparent'};"
+        style="flex: 1; text-align: center; padding: 0.6rem 0; font-weight: 600; border-bottom: 2px solid transparent; background: transparent; color: {tab === 'adult' ? '#0f766e' : '#64748b'}; border-bottom-color: {tab === 'adult' ? '#0f766e' : 'transparent'}; font-size: 0.9rem;"
       >
-        Adult
+        Adult Portal
       </button>
       <button 
         class:active={tab === 'learner'} 
         on:click={() => tab = 'learner'}
-        style="flex: 1; text-align: center; padding: 0.75rem 0; font-weight: 600; border-bottom: 2px solid transparent; background: transparent; color: {tab === 'learner' ? '#0f766e' : '#64748b'}; border-bottom-color: {tab === 'learner' ? '#0f766e' : 'transparent'};"
+        style="flex: 1; text-align: center; padding: 0.6rem 0; font-weight: 600; border-bottom: 2px solid transparent; background: transparent; color: {tab === 'learner' ? '#0f766e' : '#64748b'}; border-bottom-color: {tab === 'learner' ? '#0f766e' : 'transparent'}; font-size: 0.9rem;"
       >
-        Student
+        Student Portal
       </button>
     </div>
 
@@ -64,8 +65,8 @@
     <form on:submit|preventDefault={submit} style="display: flex; flex-direction: column; gap: 1.25rem;">
       {#if tab === 'adult'}
         <label style="margin: 0;">
-          <span>Email or phone</span>
-          <input bind:value={identifier} autocomplete="username" placeholder="Enter your email or phone" required />
+          <span>Email or Phone</span>
+          <input bind:value={identifier} autocomplete="username" placeholder="name@example.com" required />
         </label>
         <label style="margin: 0;">
           <span>Password</span>
@@ -73,33 +74,33 @@
         </label>
       {:else}
         <label style="margin: 0;">
-          <span>Username or name</span>
+          <span>Username</span>
           <input bind:value={username} placeholder="Enter your username" required />
         </label>
         <label style="margin: 0;">
-          <span>6-digit PIN</span>
+          <span>6-Digit PIN</span>
           <input bind:value={pin} type="password" inputmode="numeric" maxlength="6" placeholder="••••••" required />
         </label>
       {/if}
 
-      <HCaptcha bind:token={hcaptchaToken} label="Confirm this login is human" />
+      <HCaptcha bind:token={hcaptchaToken} label="Security Verification" />
 
-      <button disabled={loading} style="width: 100%; padding: 0.85rem; font-size: 1rem; font-weight: 700; margin-top: 0.5rem;">
+      <button disabled={loading} style="width: 100%; padding: 0.8rem; font-size: 0.95rem; font-weight: 600; margin-top: 0.5rem;">
         {#if loading}
-          <span>Checking…</span>
+          <span>Verifying…</span>
         {:else}
-          <Icon name="lock" size={18} />
-          <span>Login</span>
+          <Icon name="lock" size={16} />
+          <span>Log In</span>
         {/if}
       </button>
     </form>
 
     <div style="text-align: center; margin-top: 0.5rem;">
-      <a href="/forgot-password" class="muted" style="font-size: 0.9rem; font-weight: 500; hover:color: var(--primary);">Forgot password?</a>
+      <a href="/forgot-password" class="muted" style="font-size: 0.85rem; font-weight: 500;">Forgot password?</a>
     </div>
   </div>
 
   <div style="text-align: center;">
-    <p class="muted" style="font-size: 0.95rem;">Don't have an account? <a href="/register" style="color: var(--primary); font-weight: 700;">Sign up</a></p>
+    <p class="muted" style="font-size: 0.9rem;">Don't have an account? <a href="/register" style="color: var(--primary); font-weight: 600;">Sign up</a></p>
   </div>
 </section>

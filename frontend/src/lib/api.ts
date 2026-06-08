@@ -1,4 +1,3 @@
-
 export type APIResult<T> = { ok: true; data: T } | { ok: false; error: string };
 export type ProjectKind = 'code' | 'animation' | 'movie' | 'game' | 'website-app' | 'graphic-design' | 'beat' | 'all';
 export type ProjectPayload = Record<string, unknown>;
@@ -6,17 +5,20 @@ export type ProjectPayload = Record<string, unknown>;
 const API_BASE = '/api';
 let memoryAccessToken = '';
 let memoryCSRFToken = '';
+
 function cookieValue(name: string) {
   if (typeof document === 'undefined') return '';
   const item = document.cookie.split('; ').find((row) => row.startsWith(`${name}=`));
   return item ? decodeURIComponent(item.split('=').slice(1).join('=')) : '';
 }
+
 function csrfHeader(method = 'GET') {
   const unsafe = !['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase());
   if (!unsafe) return {};
   const token = memoryCSRFToken || cookieValue('learnzur_csrf');
   return token ? { 'X-CSRF-Token': token } : {};
 }
+
 export function setAccessToken(token: string) { memoryAccessToken = token; }
 export function clearAccessToken() { memoryAccessToken = ''; }
 const JSON_HEADERS = Object.freeze({ 'Content-Type': 'application/json' } as const);
@@ -29,19 +31,40 @@ function authHeaders() {
 async function request<T = unknown>(path: string, options: RequestInit = {}): Promise<APIResult<T>> {
   try {
     const method = options.method || 'GET';
-    const headers = { ...JSON_HEADERS, ...authHeaders(), ...csrfHeader(String(method)), ...(options.headers || {}) };
+    const headers = { 
+      ...JSON_HEADERS, 
+      ...authHeaders(), 
+      ...csrfHeader(String(method)), 
+      ...(options.headers || {}) 
+    };
     const response = await fetch(`${API_BASE}${path}`, { ...options, headers, credentials: 'same-origin' });
-    const data = (await response.json()) as T;
-    if (!response.ok) return { ok: false, error: 'Request failed safely.' };
-    return { ok: true, data };
-  } catch {
+    
+    // Handle empty responses or non-JSON responses gracefully
+    const contentType = response.headers.get('content-type');
+    let data: any;
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      data = { message: await response.text() };
+    }
+
+    if (!response.ok) {
+      return { ok: false, error: data?.error || data?.message || 'Request failed safely.' };
+    }
+    return { ok: true, data: data as T };
+  } catch (err) {
     return { ok: false, error: 'Network error. Please try again.' };
   }
 }
 
 export async function apiUpload<T = unknown>(path: string, form: FormData): Promise<APIResult<T>> {
   try {
-    const response = await fetch(`${API_BASE}${path}`, { method: 'POST', headers: { ...authHeaders(), ...csrfHeader('POST') }, body: form, credentials: 'same-origin' });
+    const response = await fetch(`${API_BASE}${path}`, { 
+      method: 'POST', 
+      headers: { ...authHeaders(), ...csrfHeader('POST') }, 
+      body: form, 
+      credentials: 'same-origin' 
+    });
     const data = (await response.json()) as T;
     if (!response.ok) return { ok: false, error: 'Upload failed safely.' };
     return { ok: true, data };
@@ -79,19 +102,71 @@ export const endpoints = Object.freeze({
 export type LoginResponse = { accessToken: string; user: { id: string; role: 'admin'|'parent'|'teacher'|'learner'; name: string } };
 export type SignupPayload = Record<string, unknown>;
 
-export async function login(identifier: string, password: string, hcaptchaToken = '') { return request<LoginResponse>(endpoints.login, { method: 'POST', body: JSON.stringify({ identifier, password, hcaptchaToken }) }); }
-export async function learnerLogin(username: string, pin: string, hcaptchaToken = '') { return request<LoginResponse>(endpoints.learnerLogin, { method: 'POST', body: JSON.stringify({ username, pin, hcaptchaToken }) }); }
-export async function signupParent(payload: SignupPayload) { return request(endpoints.parentSignup, { method: 'POST', body: JSON.stringify(payload) }); }
-export async function signupTeacher(payload: SignupPayload) { return request(endpoints.teacherSignup, { method: 'POST', body: JSON.stringify(payload) }); }
-export async function signupOrganization(payload: SignupPayload) { return request(endpoints.organizationSignup, { method: 'POST', body: JSON.stringify(payload) }); }
-export async function sendOTP(email: string, purpose = 'signup', hcaptchaToken = '') { return request('/auth/otp/send', { method: 'POST', body: JSON.stringify({ email, purpose, hcaptchaToken }) }); }
-export async function forgotPassword(email: string, hcaptchaToken = '') { return request('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email, hcaptchaToken }) }); }
-export async function resetPassword(token: string, password: string, hcaptchaToken = '') { return request('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password, hcaptchaToken }) }); }
-export async function refreshSession() { const result = await request<LoginResponse>(endpoints.refresh, { method: 'POST' }); if (result.ok) setAccessToken(result.data.accessToken); return result; }
-export async function logout() { const result = await request(endpoints.logout, { method: 'POST' }); clearAccessToken(); return result; }
-export async function logoutAll() { const result = await request(endpoints.logoutAll, { method: 'POST' }); clearAccessToken(); return result; }
+export async function login(identifier: string, password: string, hcaptchaToken = '') { 
+  return request<LoginResponse>(endpoints.login, { method: 'POST', body: JSON.stringify({ identifier, password, hcaptchaToken }) }); 
+}
+
+export async function learnerLogin(username: string, pin: string, hcaptchaToken = '') { 
+  return request<LoginResponse>(endpoints.learnerLogin, { method: 'POST', body: JSON.stringify({ username, pin, hcaptchaToken }) }); 
+}
+
+export async function signupParent(payload: SignupPayload) { 
+  return request(endpoints.parentSignup, { method: 'POST', body: JSON.stringify(payload) }); 
+}
+
+export async function signupTeacher(payload: SignupPayload) { 
+  return request(endpoints.teacherSignup, { method: 'POST', body: JSON.stringify(payload) }); 
+}
+
+export async function signupOrganization(payload: SignupPayload) { 
+  return request(endpoints.organizationSignup, { method: 'POST', body: JSON.stringify(payload) }); 
+}
+
+export async function sendOTP(email: string, purpose = 'signup', hcaptchaToken = '') { 
+  // Ensure we fetch a CSRF token first if we don't have one to prevent 403 Forbidden
+  if (!memoryCSRFToken && typeof document !== 'undefined') {
+    await csrf();
+  }
+  return request('/auth/otp/send', { 
+    method: 'POST', 
+    body: JSON.stringify({ email, purpose, hcaptchaToken }) 
+  }); 
+}
+
+export async function forgotPassword(email: string, hcaptchaToken = '') { 
+  return request('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email, hcaptchaToken }) }); 
+}
+
+export async function resetPassword(token: string, password: string, hcaptchaToken = '') { 
+  return request('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password, hcaptchaToken }) }); 
+}
+
+export async function refreshSession() { 
+  const result = await request<LoginResponse>(endpoints.refresh, { method: 'POST' }); 
+  if (result.ok) setAccessToken(result.data.accessToken); 
+  return result; 
+}
+
+export async function logout() { 
+  const result = await request(endpoints.logout, { method: 'POST' }); 
+  clearAccessToken(); 
+  return result; 
+}
+
+export async function logoutAll() { 
+  const result = await request(endpoints.logoutAll, { method: 'POST' }); 
+  clearAccessToken(); 
+  return result; 
+}
+
 export async function currentSession() { return request(endpoints.session); }
-export async function csrf() { const result = await request<{ csrfToken: string }>(endpoints.csrf, { method: 'POST' }); if (result.ok) memoryCSRFToken = result.data.csrfToken; return result; }
+
+export async function csrf() { 
+  const result = await request<{ csrfToken: string }>(endpoints.csrf, { method: 'POST' }); 
+  if (result.ok) memoryCSRFToken = result.data.csrfToken; 
+  return result; 
+}
+
 export async function adminUsers(scope = '') { return request(`/admin/users${scope}`); }
 export async function adminData(area: string) { return request(`/admin/${area}`); }
 
