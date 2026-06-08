@@ -1,21 +1,19 @@
 {
   "short_name": "Learnzur",
   "name": "Learnzur Online Holiday Tuition",
+  "description": "Kenya-first holiday tuition, live classes, creative studios, and safe learner projects.",
   "icons": [
     {
-      "src": "favicon.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "favicon.png",
-      "type": "image/png",
-      "sizes": "512x512"
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/",
-  "background_color": "#0f766e",
+  "scope": "/",
+  "background_color": "#f7faf9",
   "theme_color": "#0f766e",
   "display": "standalone",
-  "orientation": "portrait"
+  "orientation": "portrait-primary"
 }
