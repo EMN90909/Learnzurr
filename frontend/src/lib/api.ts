@@ -19,6 +19,11 @@ function csrfHeader(method = 'GET') {
   return token ? { 'X-CSRF-Token': token } : {};
 }
 
+async function ensureCSRF() {
+  if (memoryCSRFToken || cookieValue('learnzur_csrf') || typeof document === 'undefined') return;
+  await csrf();
+}
+
 export function setAccessToken(token: string) { memoryAccessToken = token; }
 export function clearAccessToken() { memoryAccessToken = ''; }
 const JSON_HEADERS = Object.freeze({ 'Content-Type': 'application/json' } as const);
@@ -39,7 +44,6 @@ async function request<T = unknown>(path: string, options: RequestInit = {}): Pr
     };
     const response = await fetch(`${API_BASE}${path}`, { ...options, headers, credentials: 'same-origin' });
     
-    // Handle empty responses or non-JSON responses gracefully
     const contentType = response.headers.get('content-type');
     let data: any;
     if (contentType && contentType.includes('application/json')) {
@@ -49,7 +53,14 @@ async function request<T = unknown>(path: string, options: RequestInit = {}): Pr
     }
 
     if (!response.ok) {
-      return { ok: false, error: data?.error || data?.message || 'Request failed safely.' };
+      const message = data?.error || data?.message || 'Request failed safely.';
+      if (response.status === 403 && String(message).toLowerCase().includes('security')) {
+        return { ok: false, error: 'Security check failed. Complete hCaptcha, then try again.' };
+      }
+      if (response.status === 503) {
+        return { ok: false, error: 'The auth provider is not configured yet. Check the Render environment variables.' };
+      }
+      return { ok: false, error: message };
     }
     return { ok: true, data: data as T };
   } catch (err) {
@@ -59,6 +70,7 @@ async function request<T = unknown>(path: string, options: RequestInit = {}): Pr
 
 export async function apiUpload<T = unknown>(path: string, form: FormData): Promise<APIResult<T>> {
   try {
+    await ensureCSRF();
     const response = await fetch(`${API_BASE}${path}`, { 
       method: 'POST', 
       headers: { ...authHeaders(), ...csrfHeader('POST') }, 
@@ -103,30 +115,32 @@ export type LoginResponse = { accessToken: string; user: { id: string; role: 'ad
 export type SignupPayload = Record<string, unknown>;
 
 export async function login(identifier: string, password: string, hcaptchaToken = '') { 
+  await ensureCSRF();
   return request<LoginResponse>(endpoints.login, { method: 'POST', body: JSON.stringify({ identifier, password, hcaptchaToken }) }); 
 }
 
 export async function learnerLogin(username: string, pin: string, hcaptchaToken = '') { 
+  await ensureCSRF();
   return request<LoginResponse>(endpoints.learnerLogin, { method: 'POST', body: JSON.stringify({ username, pin, hcaptchaToken }) }); 
 }
 
 export async function signupParent(payload: SignupPayload) { 
+  await ensureCSRF();
   return request(endpoints.parentSignup, { method: 'POST', body: JSON.stringify(payload) }); 
 }
 
 export async function signupTeacher(payload: SignupPayload) { 
+  await ensureCSRF();
   return request(endpoints.teacherSignup, { method: 'POST', body: JSON.stringify(payload) }); 
 }
 
 export async function signupOrganization(payload: SignupPayload) { 
+  await ensureCSRF();
   return request(endpoints.organizationSignup, { method: 'POST', body: JSON.stringify(payload) }); 
 }
 
 export async function sendOTP(email: string, purpose = 'signup', hcaptchaToken = '') { 
-  // Ensure we fetch a CSRF token first if we don't have one to prevent 403 Forbidden
-  if (!memoryCSRFToken && typeof document !== 'undefined') {
-    await csrf();
-  }
+  await ensureCSRF();
   return request('/auth/otp/send', { 
     method: 'POST', 
     body: JSON.stringify({ email, purpose, hcaptchaToken }) 
@@ -134,26 +148,31 @@ export async function sendOTP(email: string, purpose = 'signup', hcaptchaToken =
 }
 
 export async function forgotPassword(email: string, hcaptchaToken = '') { 
+  await ensureCSRF();
   return request('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email, hcaptchaToken }) }); 
 }
 
 export async function resetPassword(token: string, password: string, hcaptchaToken = '') { 
+  await ensureCSRF();
   return request('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password, hcaptchaToken }) }); 
 }
 
 export async function refreshSession() { 
+  await ensureCSRF();
   const result = await request<LoginResponse>(endpoints.refresh, { method: 'POST' }); 
   if (result.ok) setAccessToken(result.data.accessToken); 
   return result; 
 }
 
 export async function logout() { 
+  await ensureCSRF();
   const result = await request(endpoints.logout, { method: 'POST' }); 
   clearAccessToken(); 
   return result; 
 }
 
 export async function logoutAll() { 
+  await ensureCSRF();
   const result = await request(endpoints.logoutAll, { method: 'POST' }); 
   clearAccessToken(); 
   return result; 
