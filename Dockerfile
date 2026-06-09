@@ -39,6 +39,10 @@ RUN apk add --no-cache ca-certificates tini \
 
 COPY --from=frontend-builder /app/frontend/build ./frontend/build
 COPY --from=frontend-builder /app/frontend/package.json ./frontend/package.json
+WORKDIR /app/frontend
+RUN npm install --omit=dev --ignore-scripts \
+  && npm cache clean --force
+WORKDIR /app
 COPY --from=backend-builder /out/learnzur-api /usr/local/bin/learnzur-api
 COPY --from=backend-builder /out/learnzur-worker /usr/local/bin/learnzur-worker
 COPY --from=backend-builder /out/learnzur-gamfy /usr/local/bin/learnzur-gamfy
