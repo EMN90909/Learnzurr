@@ -1,12 +1,17 @@
-const CACHE_NAME = 'learnzur-shell-v1';
-const SHELL = ['/', '/explore', '/about', '/contact'];
+const CACHE_NAME = 'learnzur-shell-disabled-v2';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)));
+  event.waitUntil(
+    caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))).then(() => self.skipWaiting())
+  );
 });
 
-self.addEventListener('fetch', (event) => {
-  const request = event.request;
-  if (request.method !== 'GET') return;
-  event.respondWith(fetch(request).catch(() => caches.match(request).then((res) => res || caches.match('/'))));
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', () => {
+  // Let the browser load fresh HTML, CSS, JS, and API responses from the network.
 });
