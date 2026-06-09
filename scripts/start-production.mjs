@@ -28,12 +28,12 @@ function startProcess(name, command, args, env) {
   return child;
 }
 
-function proxyRequest(targetPort, req, res) {
+function proxyRequest(targetPort, req, res, pathOverride) {
   const upstream = http.request({
     hostname: '127.0.0.1',
     port: targetPort,
     method: req.method,
-    path: req.url,
+    path: pathOverride || req.url,
     headers: {
       ...req.headers,
       host: req.headers.host,
@@ -115,6 +115,20 @@ const server = http.createServer((req, res) => {
   if (req.url.startsWith('/api/')) {
     proxyRequest(apiPort, req, res);
     return;
+  }
+
+  if (req.url.startsWith('/public/') || req.url === '/public') {
+    proxyRequest(apiPort, req, res, `/api${req.url}`);
+    return;
+  }
+
+  if (req.method === 'GET') {
+    const accept = req.headers.accept || '';
+    const looksLikePage = accept.includes('text/html') && !req.url.includes('.') && !req.url.startsWith('/_app/');
+    if (looksLikePage) {
+      proxyRequest(frontendPort, req, res, '/');
+      return;
+    }
   }
 
   proxyRequest(frontendPort, req, res);
