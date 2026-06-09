@@ -1,10 +1,30 @@
 import { env as publicEnv } from '$env/dynamic/public';
 import type { FeaturedClass, PublicStats, Subject } from './types';
 
-const API_BASE = publicEnv.PUBLIC_API_BASE_URL || '/api';
+function normalizeApiBase(value: string | undefined): string {
+  const raw = (value || '').trim();
+  if (!raw) return '/api';
+
+  const withoutTrailingSlash = raw.replace(/\/+$/, '');
+  if (withoutTrailingSlash === '/api' || withoutTrailingSlash.endsWith('/api')) return withoutTrailingSlash;
+
+  if (withoutTrailingSlash.startsWith('/')) return `${withoutTrailingSlash}/api`;
+
+  try {
+    const url = new URL(withoutTrailingSlash);
+    if (typeof window !== 'undefined' && url.origin === window.location.origin) return '/api';
+    url.pathname = `${url.pathname.replace(/\/+$/, '')}/api`;
+    return url.toString().replace(/\/+$/, '');
+  } catch {
+    return '/api';
+  }
+}
+
+const API_BASE = normalizeApiBase(publicEnv.PUBLIC_API_BASE_URL);
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const apiPath = path.startsWith('/') ? path : `/${path}`;
+  const res = await fetch(`${API_BASE}${apiPath}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
@@ -22,7 +42,8 @@ export const api = {
   login: (email: string, password: string) => request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   subscribePush: (subscription: PushSubscriptionJSON) => request('/notify/subscribe', { method: 'POST', body: JSON.stringify(subscription) }),
   upload: async (path: string, form: FormData, token: string) => {
-    const res = await fetch(`${API_BASE}${path}`, { method: 'POST', body: form, headers: { Authorization: `Bearer ${token}` } });
+    const apiPath = path.startsWith('/') ? path : `/${path}`;
+    const res = await fetch(`${API_BASE}${apiPath}`, { method: 'POST', body: form, headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   }
