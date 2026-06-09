@@ -69,11 +69,6 @@ docker run --env-file .env -p 8080:80 learnzur
 The root `docker-compose.yml` includes Redis and PostgreSQL for cache, queues, and Supabase-compatible development.
 
 
-## SSR and SEO
-
-SvelteKit SSR is enabled through `@sveltejs/adapter-node`. Public pages and class pages expose metadata via `+page.ts` and `+layout.svelte` for SEO indexing as a Kenyan education platform.
-
-
 ## Learner Creation Studio
 
 Animation tools include:
@@ -169,25 +164,6 @@ Includes:
 - Performance rules (50+)
 
 
-## Admin, email, moderation system
-
-Resend used for email delivery
-AI moderation via Gemini / OpenRouter / DeepSeek
-Admin access stored in `admin_portal_access`
-Admin dashboard includes full system control panels
-Classroom chat scanned before delivery
-Unsafe content triggers restriction flow
-
-
-## Authentication & hosting
-
-- hCaptcha on login and signup flows
-- Email OTP via Resend HTML system
-- Full admin portal coverage
-- Docker deployment supported via `render.yaml`
-- Oracle ARM VM support via `oracle.yaml`
-
-
 ## Create + Explore system
 
 Users can:
@@ -208,7 +184,11 @@ Explore supports:
 - Likes
 - Comments
 - Reports
-- SEO indexing
+
+
+## product of emtra
+
+product of emtra: [emtra.top](https://emtra.top)
 
 
 ## EMTRA-CORP PROPRIETARY LICENSE
@@ -246,12 +226,3 @@ In no event shall Emtra-Corp be liable for any claim, damages, or other liabilit
 **GOVERNING TERMS**
 
 Any unauthorized use of the Software is strictly prohibited and may result in legal action.
-
----
-
-If you want next level polish, I can:
-- Add more detailed API documentation
-- Include deployment architecture diagrams
-- Create user flow diagrams
-
-Just say 👍
