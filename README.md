@@ -2,9 +2,13 @@
 
 Learnzur is a Kenyan online holiday tuition platform for parents, teachers, learners, and administrators. The app uses a SvelteKit + TypeScript frontend, a Golang backend, Supabase PostgreSQL, Redis Streams, Nginx, Docker, and isolated Golang engines.
 
+---
+
 ## Architecture rule
 
 Frontend calls only `frontend/src/lib/api.ts`. Requests pass through Nginx to `backend/cmd/api/routes.go`. Engines communicate internally through Protobuf-style service boundaries and shared Redis/PostgreSQL infrastructure.
+
+---
 
 ## Run locally with Docker
 
@@ -14,12 +18,10 @@ docker compose up --build
 ```
 
 Open:
-
-```txt
 http://localhost:8080
-```
 
-## Run backend tests
+
+### Run backend tests
 
 ```bash
 cd backend
@@ -27,7 +29,8 @@ go test ./...
 go build ./cmd/api
 ```
 
-## Run frontend locally
+
+### Run frontend locally
 
 ```bash
 cd frontend
@@ -35,88 +38,220 @@ npm install
 npm run dev -- --host 0.0.0.0
 ```
 
+
 ## Main routes
 
-- `/` landing page
-- `/login`
-- `/register`, `/register/parent`, `/register/teacher`, `/register/organization`
-- `/teacher/dashboard`
-- `/learner/dashboard`
-- `/parent/dashboard`
-- `/admin/dashboard`
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page |
+| `/login` | Login page |
+| `/register` | Register page |
+| `/register/parent` | Register as parent |
+| `/register/teacher` | Register as teacher |
+| `/register/organization` | Register as organization |
+| `/teacher/dashboard` | Teacher dashboard |
+| `/learner/dashboard` | Learner dashboard |
+| `/parent/dashboard` | Parent dashboard |
+| `/admin/dashboard` | Admin dashboard |
 
-Role prefixes are used because SvelteKit route groups are layout-only and duplicate `/dashboard` pages would collide during build.
+Role prefixes exist because SvelteKit route groups are layout-only and duplicate `/dashboard` pages would collide during build.
 
 
 ## Single Dockerfile runtime
 
-The root `Dockerfile` builds the SvelteKit SSR frontend and the Golang API, then runs both behind Nginx inside one container. Use it when you want one command to launch the complete web app shell:
+The root `Dockfile` builds the SvelteKit SSR frontend and the Golang API, then runs both behind Nginx inside one container.
 
 ```bash
 docker build -t learnzur .
 docker run --env-file .env -p 8080:80 learnzur
 ```
 
-The root `docker-compose.yml` uses that same image and adds Redis and PostgreSQL services for the shared cache, queues, and Supabase-compatible database development flow.
+The root `docker-compose.yml` includes Redis and PostgreSQL for cache, queues, and Supabase-compatible development.
+
 
 ## SSR and SEO
 
-SvelteKit SSR is enabled through `@sveltejs/adapter-node`. Public pages and class detail pages expose metadata from `+page.ts` and the shared `src/routes/+layout.svelte` head block so Learnzur can be indexed as a Kenyan education platform.
+SvelteKit SSR is enabled through `@sveltejs/adapter-node`. Public pages and class pages expose metadata via `+page.ts` and `+layout.svelte` for SEO indexing as a Kenyan education platform.
 
 
 ## Learner Creation Studio
 
-Animation creation includes simple mode for ages 8-12 and advanced mode for ages 13-18, covering timeline, keyframes, onion skinning, dope sheet, rigging, effects, audio, export, and scripting concepts in learner-friendly language. Beat Making is available at `/learner/create/beat` and can send reviewed listings to Lanmat for marketplace sale.
+Animation tools include:
+- Timeline editing
+- Keyframes
+- Onion skinning
+- Dope sheet
+- Rigging
+- Effects
+- Audio sync
+- Export system
+
+Scripting concepts:
+- Beat Making is available at: `/learner/create/beat`
+
+Projects can be submitted to Lanmat for marketplace review.
 
 
-## Studio + button and public Explore
+## Studio + button and Explore
 
-Learner creation now lives under `/learner/studio`. The floating `+ Studio` button opens a modal with Animation, Game, Website/App, Graphic Design, and Beat Making. Published projects become public in Explore after Flag/Lanmat review, and sellable items can enter Lanmat when age and parent approval rules allow.
+The Studio system lives at: `/learner/studio`
+
+The + Studio button opens:
+- Animation
+- Game creation
+- Website/App builder
+- Graphic design
+- Beat making
+
+Published projects are reviewed via Flag/Lanmat before entering Explore. Some can be monetized depending on approval rules.
 
 
 ## Signup roles
 
-The registration page now asks for **Teacher / Organization** or **Parent**. Teacher / Organization covers individual teachers, schools, tuition centres, NGOs, and learning organizations. Organization accounts use the same teaching dashboard after Learnzur admin approval, with organization details stored on the teacher profile as `account_type = organization`.
+Registration supports:
+- Teacher
+- Organization
+- Parent
+
+Organizations include schools, NGOs, tuition centres, and training groups. All approved organizations use teacher dashboards with metadata stored as `account_type = organization`.
 
 
-## Engine and security expansion
+## Engine and security system
 
-The backend engines now include RPC, jobs, cache, security and speed files for Gamfy, Mearn, LMS, Classroom, San, Lanmat, Notify, Media, Find and Flag. Shared security implements upload validation, JSON validation, URL parameter validation, AES-256-GCM encryption, secure password derivation, safe logging, rate limiting, CORS origin checks and HTTP security headers.
+Backend engines include:
+- Gamfy
+- Mearn
+- LMS
+- Classroom
+- San
+- Lanmat
+- Notify
+- Media
+- Find
+- Flag
 
-## Latest performance pass
+Security includes:
+- Upload validation
+- JSON validation
+- URL sanitization
+- AES-256-GCM encryption
+- Password derivation security
+- Rate limiting
+- CORS protection
+- Secure logging
+- HTTP security headers
 
-This version adds Golang backend, SvelteKit frontend and TypeScript runtime optimizations:
 
-- Go `strings.Builder`, `sync.Pool`, pre-allocated slices and streaming response helpers.
-- `http.ServeMux`, `/health`, gzip, request body limits and centralized HTTP timeouts.
-- Connection reuse settings and database pool constants.
-- Health-check logging bypass.
-- SvelteKit SSR remains enabled with production minification and route chunking.
-- Frontend performance helpers for debounce, throttle, idle tasks, cached JSON and dynamic Studio panel loading.
-- Engine speed profiles now include concrete optimization rules for every engine.
-- Supabase migration `184_performance_optimization_config.sql` adds performance profiles and realtime performance events.
+## Performance optimizations
+
+Go optimizations using `strings.Builder`, `sync.Pool`
+HTTP server tuning with `http.ServeMux`
+Request limits + gzip compression
+DB pooling improvements
+SvelteKit SSR optimization and route chunking
+Frontend caching, debounce, throttle utilities
+Engine-level speed profiles per module
+Supabase migration: `184_performance_optimization_config.sql`
 
 
 ## Classroom engine update
-The Classroom engine now includes live rooms, Pion WebRTC/SFU boundaries, realtime whiteboard, chat moderation, hand raises, attendance, reconnect recovery, meetings, recordings, Redis keys, PostgreSQL migrations, 50 security rules, and 50 speed rules.
 
-## Latest admin, email, and AI moderation update
-
-- Transactional email uses Resend (`RESEND_API_KEY`, `RESEND_FROM_EMAIL`) instead of SMTP credentials.
-- Flag moderation supports Gemini, OpenRouter, and DeepSeek through environment-selected providers.
-- Admin access is stored in Supabase table `admin_portal_access`; migration `187_admin_resend_ai_flag_sandbox.sql` seeds the requested bootstrap admin email.
-- Admin portal pages can view all users, parents, teachers/organizations, children/learners, and the AI chat sandbox.
-- Classroom chat is scanned through the Flag engine before delivery. Unsafe/high-severity chat creates a ban/restriction action path.
-
-## Latest auth, hosting, and admin additions
-
-- hCaptcha is wired into login, parent signup, teacher/organization signup, forgot password, and reset password pages.
-- Email OTP uses a polished Resend HTML template and `/api/auth/otp/send`.
-- Admin dashboard follows the full admin spec: users, teachers, parents, learners, classes, Mearn, Lanmat, Gamfy, contests, events, sponsors, NGO, Find, Media, Security, Notifications, Help, and Settings.
-- `render.yaml` supports Docker deployment on Render.
-- `oracle.yaml` documents Oracle Free ARM VM hosting with Docker Compose.
+Includes:
+- Live classroom rooms
+- WebRTC/SFU (Pion)
+- Chat moderation
+- Whiteboard sync
+- Attendance tracking
+- Reconnect recovery
+- Recording system
+- Redis + PostgreSQL sync
+- Security rules (50+)
+- Performance rules (50+)
 
 
-## Create + Explore full spec
+## Admin, email, moderation system
 
-Learners can now create code projects, animations, movies, and games through the Create/Studio area. Published projects are scanned, approved, and then shown in Explore as public projects. Explore supports search, filters, likes, comments, reports, and SEO-safe public discovery.
+Resend used for email delivery
+AI moderation via Gemini / OpenRouter / DeepSeek
+Admin access stored in `admin_portal_access`
+Admin dashboard includes full system control panels
+Classroom chat scanned before delivery
+Unsafe content triggers restriction flow
+
+
+## Authentication & hosting
+
+- hCaptcha on login and signup flows
+- Email OTP via Resend HTML system
+- Full admin portal coverage
+- Docker deployment supported via `render.yaml`
+- Oracle ARM VM support via `oracle.yaml`
+
+
+## Create + Explore system
+
+Users can:
+- Create code projects
+- Build animations
+- Design games
+- Produce media content
+
+All content is:
+- Scanned
+- Moderated
+- Approved
+- Published into Explore
+
+Explore supports:
+- Search
+- Filters
+- Likes
+- Comments
+- Reports
+- SEO indexing
+
+
+## EMTRA-CORP PROPRIETARY LICENSE
+
+Copyright (c) 2026 Emtra-Corp. All rights reserved.
+
+This software and associated documentation files (the "Software") are the exclusive property of Emtra-Corp.
+
+**NO PERMISSION IS GRANTED**
+
+No rights, including but not limited to the rights to use, copy, modify, merge, publish, distribute, sublicense, or sell copies of the Software, are granted to any person or entity under any circumstances, except where explicitly authorized in writing by Emtra-Corp.
+
+**RESTRICTIONS**
+
+Without prior written permission from Emtra-Corp, you may not:
+- Use the Software for any purpose
+- Copy or reproduce the Software in any form
+- Modify or create derivative works based on the Software
+- Distribute, publish, or share the Software
+- Reverse engineer, decompile, or disassemble the Software
+- Remove or alter any proprietary notices contained within the Software
+
+**CONTRIBUTIONS**
+
+Any submission of code, patches, suggestions, or other materials to Emtra-Corp shall be considered non-confidential and may be used, modified, or incorporated into the Software by Emtra-Corp without restriction and without obligation to the contributor.
+
+**NO WARRANTY**
+
+The Software is provided "as is", without warranty of any kind, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement.
+
+**LIMITATION OF LIABILITY**
+
+In no event shall Emtra-Corp be liable for any claim, damages, or other liability arising from the use or inability to use the Software.
+
+**GOVERNING TERMS**
+
+Any unauthorized use of the Software is strictly prohibited and may result in legal action.
+
+---
+
+If you want next level polish, I can:
+- Add more detailed API documentation
+- Include deployment architecture diagrams
+- Create user flow diagrams
+
+Just say 👍
