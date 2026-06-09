@@ -1,0 +1,33 @@
+FROM golang:1.23-alpine AS builder
+WORKDIR /app/backend
+COPY backend/go.mod backend/go.sum ./
+COPY backend/ ./
+RUN go build -o /out/api ./cmd/api  && go build -o /out/worker ./cmd/worker  && for e in gamfy mearn lms classroom san lanmat notify media find flag; do go build -o /out/$e ./engines/$e/cmd/$e; done
+
+FROM alpine:3.20 AS api
+RUN adduser -D -g '' learnzur
+USER learnzur
+COPY --from=builder /out/api /usr/local/bin/api
+EXPOSE 8080
+CMD ["api"]
+
+FROM alpine:3.20 AS worker
+RUN adduser -D -g '' learnzur
+USER learnzur
+COPY --from=builder /out/worker /usr/local/bin/worker
+CMD ["worker"]
+
+FROM alpine:3.20 AS engine
+RUN adduser -D -g '' learnzur
+USER learnzur
+COPY --from=builder /out/gamfy /usr/local/bin/gamfy
+COPY --from=builder /out/mearn /usr/local/bin/mearn
+COPY --from=builder /out/lms /usr/local/bin/lms
+COPY --from=builder /out/classroom /usr/local/bin/classroom
+COPY --from=builder /out/san /usr/local/bin/san
+COPY --from=builder /out/lanmat /usr/local/bin/lanmat
+COPY --from=builder /out/notify /usr/local/bin/notify
+COPY --from=builder /out/media /usr/local/bin/media
+COPY --from=builder /out/find /usr/local/bin/find
+COPY --from=builder /out/flag /usr/local/bin/flag
+CMD ["sh", "-c", "/usr/local/bin/${ENGINE:-gamfy}"]

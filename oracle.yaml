@@ -1,0 +1,103 @@
+# Oracle Cloud Infrastructure deployment blueprint for Learnzur.
+# This file is intentionally plain YAML so it can be used as an operations manifest
+# for an OCI VM, Container Instance, or Resource Manager wrapper.
+#
+# Recommended OCI shape for the single-container app:
+#   VM.Standard.A1.Flex, 2 OCPUs, 12 GB RAM minimum for web + API.
+# Use managed Supabase PostgreSQL externally through DATABASE_URL.
+# Use OCI Cache with Redis, Upstash Redis, or a small Redis container for REDIS_ADDR.
+
+application:
+  name: learnzur
+  runtime: docker
+  dockerfile: ./Dockerfile
+  public_port_env: PORT
+  public_port_default: 10000
+  health_check_path: /healthz
+
+image:
+  build:
+    context: .
+    dockerfile: Dockerfile
+    command: docker build -t learnzur:latest .
+  run:
+    command: >-
+      docker run -d
+      --name learnzur-web
+      --restart unless-stopped
+      --env-file .env
+      -e PORT=10000
+      -p 80:10000
+      learnzur:latest
+
+oracle_vm:
+  shape: VM.Standard.A1.Flex
+  ocpus: 2
+  memory_gb: 12
+  boot_volume_gb: 80
+  ingress:
+    - protocol: tcp
+      port: 80
+      source: 0.0.0.0/0
+      description: HTTP traffic to Learnzur container
+    - protocol: tcp
+      port: 443
+      source: 0.0.0.0/0
+      description: HTTPS traffic if Caddy/Nginx TLS is added in front
+    - protocol: tcp
+      port: 22
+      source: your_admin_ip/32
+      description: SSH; restrict this to your own IP
+
+required_environment:
+  NODE_ENV: production
+  PORT: 10000
+  HOST: 0.0.0.0
+  FRONTEND_PORT: 3000
+  API_PORT: 8080
+  PUBLIC_API_BASE_URL: /api
+  DATABASE_URL: postgres://user:password@host:5432/postgres?sslmode=require
+  SUPABASE_URL: https://your-project.supabase.co
+  SUPABASE_ANON_KEY: replace-me
+  SUPABASE_SERVICE_ROLE_KEY: replace-me
+  REDIS_ADDR: redis-host:6379
+  JWT_SECRET: replace-with-strong-secret
+
+optional_environment:
+  MPESA_CONSUMER_KEY: ''
+  MPESA_CONSUMER_SECRET: ''
+  MPESA_SHORTCODE: ''
+  MPESA_PASSKEY: ''
+  SMTP_HOST: ''
+  SMTP_PORT: ''
+  SMTP_USER: ''
+  SMTP_PASS: ''
+
+commands:
+  install_docker_on_oracle_linux: |
+    sudo dnf update -y
+    sudo dnf install -y docker git
+    sudo systemctl enable --now docker
+    sudo usermod -aG docker opc
+  deploy: |
+    git clone <your-repository-url> learnzur
+    cd learnzur
+    cp .env.example .env
+    # edit .env with Supabase, Redis, JWT, M-Pesa and SMTP values
+    docker build -t learnzur:latest .
+    docker rm -f learnzur-web || true
+    docker run -d --name learnzur-web --restart unless-stopped --env-file .env -e PORT=10000 -p 80:10000 learnzur:latest
+  update: |
+    cd learnzur
+    git pull
+    docker build -t learnzur:latest .
+    docker rm -f learnzur-web || true
+    docker run -d --name learnzur-web --restart unless-stopped --env-file .env -e PORT=10000 -p 80:10000 learnzur:latest
+  logs: docker logs -f learnzur-web
+  health_check: curl -fsS http://127.0.0.1/healthz
+
+notes:
+  - Supabase is the database source of truth. Do not configure Convex variables.
+  - Run Supabase migrations before production traffic.
+  - Put TLS in front of the container using OCI Load Balancer, Caddy, or Nginx.
+  - Keep SUPABASE_SERVICE_ROLE_KEY server-side only. Never expose it in SvelteKit public variables.

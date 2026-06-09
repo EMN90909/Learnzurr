@@ -1,0 +1,78 @@
+services:
+  - type: web
+    name: learnzur-web
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PUBLIC_API_BASE_URL
+        value: /api
+      - key: API_PORT
+        value: 8080
+      - key: FRONTEND_PORT
+        value: 3000
+      - key: JWT_SECRET
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: REDIS_ADDR
+        fromService:
+          type: redis
+          name: learnzur-redis
+          property: connectionString
+      - key: MPESA_CONSUMER_KEY
+        sync: false
+      - key: MPESA_CONSUMER_SECRET
+        sync: false
+      - key: MPESA_SHORTCODE
+        sync: false
+      - key: MPESA_PASSKEY
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+
+  - type: worker
+    name: learnzur-worker
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: /usr/local/bin/learnzur-worker
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: REDIS_ADDR
+        fromService:
+          type: redis
+          name: learnzur-redis
+          property: connectionString
+      - key: JWT_SECRET
+        sync: false
+
+  - type: redis
+    name: learnzur-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []

@@ -1,0 +1,25 @@
+{
+  "name": "learnzur-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "prepare": "svelte-kit sync"
+  },
+  "dependencies": {
+    "@sveltejs/adapter-node": "latest",
+    "@sveltejs/kit": "latest",
+    "@sveltejs/vite-plugin-svelte": "latest",
+    "svelte": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "svelte-check": "latest",
+    "typescript": "latest"
+  }
+}

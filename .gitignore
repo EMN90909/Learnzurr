@@ -1,0 +1,9 @@
+node_modules/
+.env
+.DS_Store
+frontend/.svelte-kit/
+frontend/build/
+backend/bin/
+*.log
+.tmp/
+coverage/
