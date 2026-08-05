@@ -64,13 +64,19 @@ var upgrader = websocket.Upgrader{
   },
 }
 
+func signedValue(secret, value string) string {
+  mac := hmac.New(sha256.New, []byte(secret))
+  mac.Write([]byte(value))
+  return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+}
+
 func validToken(session, room, id, role, token string) bool {
   secret := os.Getenv("SIGNALING_SHARED_SECRET")
   if secret == "" { return os.Getenv("SIGNAL_ALLOW_INSECURE") == "true" }
-  mac := hmac.New(sha256.New, []byte(secret))
-  mac.Write([]byte(session + ":" + room + ":" + id + ":" + role))
-  expected := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-  return hmac.Equal([]byte(expected), []byte(token))
+  roomBound := signedValue(secret, session+":"+room+":"+id+":"+role)
+  if hmac.Equal([]byte(roomBound), []byte(token)) { return true }
+  legacy := signedValue(secret, session+":"+id+":"+role)
+  return hmac.Equal([]byte(legacy), []byte(token))
 }
 
 func (h *Hub) join(c *Client) bool {
