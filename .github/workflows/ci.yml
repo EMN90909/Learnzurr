@@ -1,0 +1,37 @@
+name: Learnzurr CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  website-and-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm install
+      - run: npm run build
+
+  signaling:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: signaling
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache-dependency-path: signaling/go.mod
+      - run: go mod download
+      - run: go test ./...
+      - run: go build ./...
