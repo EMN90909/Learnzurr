@@ -1,6 +1,6 @@
 {
   "name": "learnzurr",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
   "type": "module",
   "engines": { "node": ">=20" },
@@ -9,6 +9,10 @@
     "dev:web": "vite",
     "dev:api": "tsx watch server/index.ts",
     "dev:signal": "go run ./signaling",
+    "dev:website": "npm --prefix frontend/website run dev",
+    "build:website": "npm --prefix frontend/website run build",
+    "mobile:bootstrap": "sh frontend/mobile_app/tool/bootstrap_platforms.sh",
+    "mobile:run": "cd frontend/mobile_app && flutter run",
     "build": "tsc --noEmit && vite build && tsc -p tsconfig.node.json",
     "start": "node dist-server/index.js"
   },
