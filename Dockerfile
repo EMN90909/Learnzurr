@@ -1,10 +1,16 @@
-FROM node:20-alpine
+FROM node:20-alpine AS build
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@10.25.0 --activate
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --no-frozen-lockfile
+COPY package.json ./
+RUN npm install
 COPY . .
-RUN mkdir -p public && printf 'window.__STRUTA_ENV__ = {};\n' > public/env.js
-RUN pnpm run build
+RUN npm run build
+
+FROM node:20-alpine AS production
+WORKDIR /app
+ENV NODE_ENV=production
+COPY package.json ./
+RUN npm install --omit=dev
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/dist-server ./dist-server
 EXPOSE 8081
-CMD ["sh", "-c", "pnpm start"]
+CMD ["npm", "start"]
