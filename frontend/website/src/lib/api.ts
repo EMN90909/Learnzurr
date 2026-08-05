@@ -26,11 +26,10 @@ export async function request<T>(path: string, options: ApiOptions = {}): Promis
   return payload;
 }
 
-async function joinSession(sessionId: string, token: string) {
-  const result = await request<JoinSessionResult>(`/api/live/${sessionId}/join`, {
-    method: "POST",
-    body: { token },
-  });
+async function joinSession(sessionId: string, token = "") {
+  const result = token
+    ? await request<JoinSessionResult>(`/api/live/${sessionId}/join`, { method: "POST", body: { token } })
+    : await request<JoinSessionResult>(`/api/live-sessions/${sessionId}/token`);
   const signaling = new URL(result.signalingUrl);
   signaling.searchParams.set("session", result.session.id);
   return { ...result, signalingUrl: signaling.toString() };
@@ -44,6 +43,7 @@ export const api = {
   inviteTeacher: (body: { teamId: string; email: string; percentage: number; inviterName?: string }) =>
     request<{ message: string }>("/api/team/invite", { method: "POST", body }),
   classes: () => request<{ classes: ClassroomSummary[] }>("/api/classes"),
+  createClass: (body: { title: string; description?: string }) => request<{ classroom: ClassroomSummary }>("/api/classes", { method: "POST", body }),
   liveSessions: () => request<{ sessions: LiveSessionSummary[] }>("/api/live-sessions"),
   assignments: () => request<{ assignments: AssignmentSummary[] }>("/api/assignments"),
   students: () => request<{ students: StudentSummary[] }>("/api/students"),
@@ -58,13 +58,10 @@ export const api = {
 };
 
 export async function enableWebPush() {
-  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-    throw new Error("Web push is not supported by this browser");
-  }
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) throw new Error("Web push is not supported by this browser");
   const { publicKey } = await api.pushPublicKey();
   if (!publicKey) throw new Error("Web push has not been configured on the server");
   if (await Notification.requestPermission() !== "granted") throw new Error("Notification permission was not granted");
-
   const registration = await navigator.serviceWorker.register("/sw.js");
   const existing = await registration.pushManager.getSubscription();
   const subscription = existing ?? await registration.pushManager.subscribe({
@@ -95,53 +92,13 @@ export interface TeamMember {
   last_report_at?: string | null;
   profiles?: { full_name?: string; avatar_url?: string | null; last_login_at?: string | null } | null;
 }
-export interface TeamInvite {
-  id: string;
-  email: string;
-  revenue_share: number;
-  status: string;
-  created_at: string;
-}
-export interface ClassroomSummary {
-  id: string;
-  title: string;
-  description?: string;
-  capacity?: number;
-  learnerCount?: number;
-}
-export interface LiveSessionSummary {
-  id: string;
-  class_id: string;
-  name: string;
-  starts_at: string;
-  ends_at: string;
-  status: string;
-  join_url?: string;
-}
-export interface AssignmentSummary {
-  id: string;
-  class_id: string;
-  title: string;
-  body?: { html?: string; format?: string };
-  kind: string;
-  due_at?: string | null;
-}
-export interface StudentSummary {
-  id: string;
-  full_name: string;
-  email?: string;
-  last_login_at?: string | null;
-}
+export interface TeamInvite { id: string; email: string; revenue_share: number; status: string; created_at: string }
+export interface ClassroomSummary { id: string; title: string; description?: string; capacity?: number; learnerCount?: number }
+export interface LiveSessionSummary { id: string; class_id: string; name: string; starts_at: string; ends_at: string; status: string; join_url?: string }
+export interface AssignmentSummary { id: string; class_id: string; title: string; body?: { html?: string; format?: string }; kind: string; due_at?: string | null }
+export interface StudentSummary { id: string; full_name: string; email?: string; last_login_at?: string | null }
 export interface CreateSessionResult {
-  session: {
-    id: string;
-    name: string;
-    starts_at: string;
-    ends_at: string;
-    signaling_room: string;
-    joinUrl: string;
-    signalingUrl: string;
-  };
+  session: { id: string; name: string; starts_at: string; ends_at: string; signaling_room: string; joinUrl: string; signalingUrl: string };
   notified: { learners: number; emailsSent: number; pushesSent: number };
 }
 export interface JoinSessionResult {
