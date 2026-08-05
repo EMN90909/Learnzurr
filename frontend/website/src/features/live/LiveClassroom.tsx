@@ -9,10 +9,16 @@ interface SignalMessage {
   payload?: any;
 }
 
+type QualityPreset = "200p" | "244p";
+const qualityConfig: Record<QualityPreset, { width: number; height: number; bitrate: number }> = {
+  "200p": { width: 320, height: 200, bitrate: 220_000 },
+  "244p": { width: 390, height: 244, bitrate: 250_000 },
+};
+
 export function LiveClassroom({ sessionId, token }: { sessionId: string; token: string }) {
   const [join, setJoin] = useState<JoinSessionResult | null>(null);
   const [status, setStatus] = useState("Authorizing classroom…");
-  const [quality, setQuality] = useState("244p");
+  const [quality, setQuality] = useState<QualityPreset>("200p");
   const [messages, setMessages] = useState<{ author: string; text: string; kind: string }[]>([]);
   const [draft, setDraft] = useState("");
   const localVideo = useRef<HTMLVideoElement>(null);
@@ -28,10 +34,14 @@ export function LiveClassroom({ sessionId, token }: { sessionId: string; token: 
     api.joinSession(sessionId, token).then(async (result) => {
       if (cancelled) return;
       setJoin(result);
-      const role = result.participant.role;
-      if (role === "teacher") {
+      if (result.participant.role === "teacher") {
+        const preset = qualityConfig["200p"];
         stream.current = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 320 }, height: { ideal: 244 }, frameRate: { ideal: 15, max: 20 } },
+          video: {
+            width: { ideal: preset.width, max: qualityConfig["244p"].width },
+            height: { ideal: preset.height, max: qualityConfig["244p"].height },
+            frameRate: { ideal: 12, max: 15 },
+          },
           audio: { echoCancellation: true, noiseSuppression: true },
         });
         if (localVideo.current) localVideo.current.srcObject = stream.current;
@@ -76,7 +86,9 @@ export function LiveClassroom({ sessionId, token }: { sessionId: string; token: 
       }
       if (message.type === "answer") await getPeer(message.from, result).setRemoteDescription(message.payload);
       if (message.type === "ice" && message.payload) await getPeer(message.from, result).addIceCandidate(message.payload).catch(() => undefined);
-      if (message.type === "chat" || message.type === "question") setMessages((items) => [...items, { author: message.payload?.name ?? "Participant", text: message.payload?.text ?? "", kind: message.type }]);
+      if (message.type === "chat" || message.type === "question") {
+        setMessages((items) => [...items.slice(-99), { author: message.payload?.name ?? "Participant", text: message.payload?.text ?? "", kind: message.type }]);
+      }
       if (message.type === "whiteboard") drawRemote(message.payload);
       if (message.type === "leave") closePeer(message.from);
     };
@@ -94,7 +106,9 @@ export function LiveClassroom({ sessionId, token }: { sessionId: string; token: 
     peer.ontrack = (event) => {
       if (remoteVideo.current) remoteVideo.current.srcObject = event.streams[0];
     };
-    if (result.participant.role === "teacher" && stream.current) stream.current.getTracks().forEach((track) => peer.addTrack(track, stream.current!));
+    if (result.participant.role === "teacher" && stream.current) {
+      stream.current.getTracks().forEach((track) => peer.addTrack(track, stream.current!));
+    }
     return peer;
   }
 
@@ -106,17 +120,27 @@ export function LiveClassroom({ sessionId, token }: { sessionId: string; token: 
     send({ type: "offer", to: learnerId, payload: offer });
   }
 
-  async function applyBitrate(peer: RTCPeerConnection, preset: string) {
-    const maxBitrate = preset === "200p" ? 180_000 : preset === "244p" ? 250_000 : 400_000;
+  async function applyBitrate(peer: RTCPeerConnection, preset: QualityPreset) {
     for (const sender of peer.getSenders()) {
       if (sender.track?.kind !== "video") continue;
       const parameters = sender.getParameters();
       parameters.encodings = parameters.encodings?.length ? parameters.encodings : [{}];
-      parameters.encodings[0].maxBitrate = maxBitrate;
-      parameters.encodings[0].maxFramerate = 20;
+      parameters.encodings[0].maxBitrate = qualityConfig[preset].bitrate;
+      parameters.encodings[0].maxFramerate = 15;
       parameters.degradationPreference = "maintain-framerate";
       await sender.setParameters(parameters).catch(() => undefined);
     }
+  }
+
+  async function selectQuality(preset: QualityPreset) {
+    setQuality(preset);
+    const config = qualityConfig[preset];
+    await stream.current?.getVideoTracks()[0]?.applyConstraints({
+      width: { ideal: config.width },
+      height: { ideal: config.height },
+      frameRate: { ideal: 12, max: 15 },
+    });
+    await Promise.all([...peers.current.values()].map((peer) => applyBitrate(peer, preset)));
   }
 
   function closePeer(id: string) {
@@ -130,7 +154,7 @@ export function LiveClassroom({ sessionId, token }: { sessionId: string; token: 
 
   async function shareScreen() {
     if (!join || join.participant.role !== "teacher") return;
-    const display = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15 }, audio: false });
+    const display = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 10, max: 12 } }, audio: false });
     const track = display.getVideoTracks()[0];
     await Promise.all([...peers.current.values()].map(async (peer) => {
       const sender = peer.getSenders().find((item) => item.track?.kind === "video");
@@ -151,7 +175,7 @@ export function LiveClassroom({ sessionId, token }: { sessionId: string; token: 
     const text = draft.trim();
     if (!text || !join) return;
     const item = { author: join.participant.name || "You", text, kind };
-    setMessages((items) => [...items, item]);
+    setMessages((items) => [...items.slice(-99), item]);
     send({ type: kind, payload: { name: item.author, text } });
     setDraft("");
   }
@@ -183,8 +207,11 @@ export function LiveClassroom({ sessionId, token }: { sessionId: string; token: 
     <header className="live-toolbar">
       <div><strong>{join?.session.name ?? "Live classroom"}</strong><small>{status} · teacher broadcast · max 50 learners</small></div>
       {join?.participant.role === "teacher" && <div className="live-actions">
-        <select value={quality} onChange={async (event) => { setQuality(event.target.value); await Promise.all([...peers.current.values()].map((peer) => applyBitrate(peer, event.target.value))); }}><option>200p</option><option>244p</option><option>360p</option></select>
-        <button onClick={shareScreen}>Share screen</button>
+        <select value={quality} onChange={(event) => void selectQuality(event.target.value as QualityPreset)}>
+          <option value="200p">200p · 220 kbps</option>
+          <option value="244p">244p · 250 kbps</option>
+        </select>
+        <button onClick={() => void shareScreen()}>Share screen</button>
       </div>}
     </header>
     <div className="live-grid">
