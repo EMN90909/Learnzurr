@@ -9,7 +9,7 @@ import (
 
   "github.com/pion/logging"
   "github.com/pion/transport/v4/stdnet"
-  "github.com/pion/turn/v4"
+  "github.com/pion/turn/v5"
 )
 
 var embeddedTURN *turn.Server
