@@ -6,6 +6,7 @@ import { api, enableWebPush } from "./lib/api";
 import { LiveClassroom } from "./features/live/LiveClassroom";
 import { PaystackCheckout } from "./features/payments/PaystackCheckout";
 import { TeacherClasses, TeacherDashboard, TeacherTeam } from "./features/teacher/TeacherPages";
+import { TeacherReport } from "./features/teacher/TeacherReport";
 import { RoleDataPage } from "./features/roles/RolePages";
 
 const pages: Record<AppRole, { slug: string; label: string; icon: typeof LayoutDashboard }[]> = {
@@ -119,7 +120,7 @@ function SignupChooser() {
 function TeacherClassesLoader() {
   const [classes, setClasses] = useState<{ id: string; title: string }[]>([]);
   const [message, setMessage] = useState("Loading classes…");
-  useEffect(() => { api.teacherDashboard().then((result) => { setClasses(result.classes); setMessage(""); }).catch((error: Error) => setMessage(error.message)); }, []);
+  useEffect(() => { void api.teacherDashboard().then((result) => { setClasses(result.classes); setMessage(""); }).catch((error: Error) => setMessage(error.message)); }, []);
   if (message) return <p className="form-message">{message}</p>;
   return <TeacherClasses classes={classes}/>;
 }
@@ -141,6 +142,7 @@ function RolePage({ role, slug }: { role: AppRole; slug: string }) {
   if (role === "teacher" && slug === "dashboard") return <TeacherDashboard/>;
   if (role === "teacher" && slug === "team") return <TeacherTeamLoader metadataTeamId={typeof userMetadata.team_id === "string" ? userMetadata.team_id : undefined}/>;
   if (role === "teacher" && (slug === "classes" || slug === "assignments")) return <TeacherClassesLoader/>;
+  if (role === "teacher" && slug === "reports") return <TeacherReport/>;
   if (role === "guardian" && slug === "payments") return <PaystackCheckout/>;
   if (slug === "settings") return <SettingsPage/>;
   return <RoleDataPage role={role} slug={slug}/>;
