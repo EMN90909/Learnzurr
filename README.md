@@ -1,79 +1,45 @@
-# Learnzur
+# Learnzurr
 
-Learnzur is a Kenya-first holiday tuition platform for parents, teachers, learners and administrators. This repository follows the pasted architecture: SvelteKit frontend, Go API, Go worker, internal engine packages, Redis Streams, and one Supabase PostgreSQL database.
+Learnzurr is now a full-stack TypeScript learning platform.
 
-## Source of truth
+## Active stack
 
-- The frontend never talks directly to engines or the database.
-- All frontend calls go through `frontend/src/lib/api.ts` and then `/api/*`.
-- Nginx proxies `/api/*` to the Go API and all page traffic to SvelteKit.
-- Engines expose Go packages for business logic and communicate through internal contracts. External clients do not call engines directly.
-- Redis is used for cache, idempotency and streams.
-- Supabase PostgreSQL is the only persistent database.
-- Supabase is not used in this version.
+- React 18 frontend
+- Vite development and production build
+- Express 5 + Node.js TypeScript backend
+- Paystack transaction initialization, verification, and signed webhooks
 
-## Run locally
+The root application is the only supported build and deployment path. The previous Go module and Svelte package/build entrypoints were removed. Existing Supabase migrations and related infrastructure were intentionally left untouched.
+
+## Development
 
 ```bash
+npm install
 cp .env.example .env
-docker compose up --build
+npm run dev
 ```
 
-Open `http://localhost`.
+- Web: `http://localhost:5173`
+- API: `http://localhost:8081`
 
-## Test without Docker
+## Paystack
+
+Set `PAYSTACK_SECRET_KEY` only on the Express server. Never expose the secret through a `VITE_` variable or browser code.
+
+The backend provides:
+
+- `POST /api/payments/initialize`
+- `GET /api/payments/verify/:reference`
+- `POST /api/payments/webhook`
+- `GET /api/health`
+
+Amounts entered in the UI are converted to currency subunits before Paystack initialization. Webhooks are validated using the `x-paystack-signature` HMAC-SHA512 signature.
+
+## Production
 
 ```bash
-cd backend && go test ./...
-cd ../frontend && npm install && npm run check && npm run build
+npm run build
+npm start
 ```
 
-## Database
-
-The `supabase/migrations` folder contains the table groups, policies, indexes, functions and seed data required by the API. In Docker Compose the same migration folder is mounted into the local PostgreSQL container. In Supabase hosted projects, run the files in order with the Supabase CLI.
-
-## Production notes
-
-Set real values in `.env`, rotate `JWT_SECRET`, use Supabase pooled connection strings, configure M-Pesa Daraja callbacks, configure SMTP and VAPID keys, and keep all service-role credentials server-only.
-
-## Single-container deployment
-
-This repository now includes a root `Dockerfile` for Render, Oracle Cloud, or any host that expects one container to serve the full app.
-
-The container runs three internal processes:
-
-- Go API on `API_PORT`, default `8080`
-- SvelteKit SSR server on `FRONTEND_PORT`, default `3000`
-- Node reverse proxy on public `PORT`, default `10000`
-
-Public routing:
-
-- `/api/*` goes to the Go backend
-- `/*` goes to the SvelteKit frontend
-- `/healthz` is the deployment health check
-
-Build and run locally:
-
-```bash
-docker build -t learnzur:latest .
-docker run --rm --env-file .env -e PORT=10000 -p 10000:10000 learnzur:latest
-```
-
-Open `http://localhost:10000`.
-
-## Render deployment
-
-Use `render.yaml`. Set these secret environment variables in Render:
-
-- `DATABASE_URL`
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `JWT_SECRET`
-- M-Pesa and SMTP variables when ready
-
-Render will build the root `Dockerfile`. The web service uses `/healthz` as the health check.
-
-## Oracle Cloud deployment
-
-Use `oracle.yaml` as the deployment runbook. It documents the recommended OCI VM shape, ingress ports, required environment variables, and exact Docker commands.
+Express serves the compiled Vite SPA and all `/api/*` routes from one Node.js process. The included Dockerfile builds and runs that same stack.
