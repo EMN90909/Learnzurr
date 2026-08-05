@@ -192,8 +192,7 @@ function Dashboard() {
 function LiveRoute() {
   const { sessionId = "" } = useParams();
   const [search] = useSearchParams();
-  const token = search.get("token") ?? "";
-  return token ? <LiveClassroom sessionId={sessionId} token={token}/> : <Navigate to="/signin" replace/>;
+  return <LiveClassroom sessionId={sessionId} token={search.get("token") ?? ""}/>;
 }
 
 function AppRoutes() {
