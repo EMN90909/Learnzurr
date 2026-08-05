@@ -1,3 +1,0 @@
-<script lang="ts">export let title=''; export let body=''; export let href='#'; export let priority:'low'|'medium'|'high'='low';</script>
-<a class="action {priority}" href={href}><small>{priority}</small><strong>{title}</strong><p>{body}</p></a>
-<style>.action{display:block;text-decoration:none;color:#15100b;padding:1rem;border-radius:22px;background:#fff;border:1px solid #f0e2ca;box-shadow:0 12px 30px rgba(40,24,8,.06)}small{text-transform:uppercase;letter-spacing:.12em;color:#a16817;font-weight:900}strong{display:block;margin:.3rem 0}p{margin:0;color:#6b5f50}.high{border-color:#f5b5b5}.medium{border-color:#f3d28a}</style>

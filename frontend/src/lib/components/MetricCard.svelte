@@ -1,3 +1,0 @@
-<script lang="ts">export let label=''; export let value=''; export let trend=''; export let tone:'gold'|'green'|'blue'|'rose'='gold';</script>
-<div class="metric {tone}"><p>{label}</p><strong>{value}</strong><span>{trend}</span></div>
-<style>.metric{padding:1.1rem;border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(255,255,255,.68));box-shadow:0 18px 50px rgba(30,20,10,.08);border:1px solid rgba(255,255,255,.7)}p{margin:0;color:#6b5f50;font-weight:700}strong{display:block;font-size:2rem;margin:.35rem 0;color:#17120d}span{font-size:.9rem}.gold span{color:#b7791f}.green span{color:#16825d}.blue span{color:#2463eb}.rose span{color:#be3455}</style>

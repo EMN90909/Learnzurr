@@ -1,5 +1,0 @@
-export type LearningAction = 'attend_class'|'submit_quiz'|'submit_assignment'|'streak_day'|'contest_entry'|'help_peer';
-const points: Record<LearningAction, number> = { attend_class:20, submit_quiz:35, submit_assignment:40, streak_day:15, contest_entry:70, help_peer:25 };
-export function pointsFor(action: LearningAction, age: number) { const base = points[action]; return age <= 10 ? Math.round(base * 1.2) : age >= 15 ? Math.round(base * 1.1) : base; }
-export function displayCurrencyForAge(age: number) { return age <= 12 ? 'stars' : 'points'; }
-export function nextLevel(total: number) { const thresholds = [0,500,1500,3500,7000,12000,20000]; const index = thresholds.findIndex((value, i) => total >= value && total < (thresholds[i+1] ?? Infinity)); const current = Math.max(0,index); return { level: current + 1, currentFloor: thresholds[current], nextTarget: thresholds[current+1] ?? thresholds[current], progress: thresholds[current+1] ? (total-thresholds[current])/(thresholds[current+1]-thresholds[current]) : 1 }; }

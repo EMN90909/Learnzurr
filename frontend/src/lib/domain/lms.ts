@@ -1,4 +1,0 @@
-export type Question = { id: string; prompt: string; correct: string; points: number };
-export type Answer = { questionId: string; value: string };
-export function gradeShortAnswers(questions: Question[], answers: Answer[]) { const byId = new Map(answers.map(a => [a.questionId, a.value.trim().toLowerCase()])); let score = 0; let max = 0; const details = questions.map(q => { max += q.points; const correct = byId.get(q.id) === q.correct.trim().toLowerCase(); if(correct) score += q.points; return { questionId:q.id, correct, earned: correct ? q.points : 0, max:q.points }; }); return { score, max, percent: max ? Math.round(score/max*100) : 0, details }; }
-export function dueState(dueIso: string, now = new Date()) { const due = new Date(dueIso); const diff = due.getTime() - now.getTime(); if(diff < 0) return 'overdue'; if(diff < 1000*60*60*24) return 'due_today'; return 'open'; }
