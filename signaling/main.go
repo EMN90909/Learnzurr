@@ -34,6 +34,7 @@ type Client struct {
 }
 
 type Room struct {
+  session string
   teachers map[string]*Client
   learners map[string]*Client
   createdAt time.Time
@@ -63,11 +64,11 @@ var upgrader = websocket.Upgrader{
   },
 }
 
-func validToken(session, id, role, token string) bool {
+func validToken(session, room, id, role, token string) bool {
   secret := os.Getenv("SIGNALING_SHARED_SECRET")
   if secret == "" { return os.Getenv("SIGNAL_ALLOW_INSECURE") == "true" }
   mac := hmac.New(sha256.New, []byte(secret))
-  mac.Write([]byte(session + ":" + id + ":" + role))
+  mac.Write([]byte(session + ":" + room + ":" + id + ":" + role))
   expected := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
   return hmac.Equal([]byte(expected), []byte(token))
 }
@@ -77,9 +78,10 @@ func (h *Hub) join(c *Client) bool {
   defer h.mu.Unlock()
   room := h.rooms[c.room]
   if room == nil {
-    room = &Room{teachers: map[string]*Client{}, learners: map[string]*Client{}, createdAt: time.Now()}
+    room = &Room{session: c.session, teachers: map[string]*Client{}, learners: map[string]*Client{}, createdAt: time.Now()}
     h.rooms[c.room] = room
   }
+  if room.session != c.session { return false }
   if c.role == "teacher" {
     if len(room.teachers) >= 2 { return false }
     room.teachers[c.id] = c
@@ -115,7 +117,7 @@ func (h *Hub) relay(c *Client, msg Message) {
   h.mu.RLock()
   defer h.mu.RUnlock()
   room := h.rooms[c.room]
-  if room == nil { return }
+  if room == nil || room.session != c.session { return }
   msg.From = c.id
   msg.Room = c.room
   payload, err := json.Marshal(msg)
@@ -182,7 +184,7 @@ func signal(w http.ResponseWriter, r *http.Request) {
     http.Error(w, "room, session, id and valid role required", http.StatusBadRequest)
     return
   }
-  if !validToken(session, id, role, token) {
+  if !validToken(session, room, id, role, token) {
     http.Error(w, "invalid signaling token", http.StatusUnauthorized)
     return
   }
