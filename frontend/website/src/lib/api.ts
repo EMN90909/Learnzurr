@@ -1,57 +1,54 @@
 import { supabase } from "./supabase";
 
-export class ApiError extends Error {
-  constructor(message: string, public status: number) { super(message); }
-}
+type ApiOptions = Omit<RequestInit, "body"> & { body?: unknown };
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const { data } = await supabase.auth.getSession();
+  const headers = new Headers(options.headers);
+  headers.set("Accept", "application/json");
+  if (options.body !== undefined) headers.set("Content-Type", "application/json");
+  if (data.session?.access_token) headers.set("Authorization", `Bearer ${data.session.access_token}`);
+
   const response = await fetch(path, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(data.session?.access_token ? { Authorization: `Bearer ${data.session.access_token}` } : {}),
-      ...options.headers,
-    },
+    headers,
+    body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new ApiError(payload.error ?? "Request failed", response.status);
-  return payload as T;
+  const payload = (await response.json().catch(() => ({}))) as { error?: string } & T;
+  if (!response.ok) throw new Error(payload.error ?? "The request could not be completed");
+  return payload;
 }
 
-async function joinSession(sessionId: string, token: string) {
-  const result = await request<JoinSessionResult>(`/api/live/${sessionId}/join`, { method: "POST", body: JSON.stringify({ token }) });
-  const signaling = new URL(result.signalingUrl);
-  signaling.searchParams.set("session", result.session.id);
-  return { ...result, signalingUrl: signaling.toString() };
+export async function enableWebPush() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    throw new Error("Web push is not supported by this browser");
+  }
+  const { publicKey } = await api<{ publicKey: string | null }>("/api/push/public-key");
+  if (!publicKey) throw new Error("Web push has not been configured on the server");
+
+  const registration = await navigator.serviceWorker.register("/sw.js");
+  const existing = await registration.pushManager.getSubscription();
+  const subscription =
+    existing ??
+    (await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    }));
+
+  const json = subscription.toJSON();
+  if (!json.endpoint || !json.keys?.p256dh || !json.keys.auth) {
+    throw new Error("The browser did not return a complete push subscription");
+  }
+  await api("/api/push/subscribe", {
+    method: "POST",
+    body: { endpoint: json.endpoint, keys: json.keys },
+  });
+  return subscription;
 }
 
-export const api = {
-  health: () => request<{ ok: boolean; signaling: string }>("/api/health"),
-  teacherDashboard: () => request<{ students: number; revenue: number; classes: { id: string; title: string }[]; teachers: unknown[] }>("/api/teacher/dashboard"),
-  team: (teamId: string) => request<{ team: { id: string; name: string }; members: TeamMember[]; invites: TeamInvite[] }>(`/api/team/${teamId}`),
-  inviteTeacher: (body: { teamId: string; email: string; percentage: number; inviterName?: string }) => request<{ message: string }>("/api/team/invite", { method: "POST", body: JSON.stringify(body) }),
-  createSession: (classId: string, body: { name: string; startsAt: string; endsAt: string }) => request<CreateSessionResult>(`/api/classes/${classId}/sessions`, { method: "POST", body: JSON.stringify(body) }),
-  createAssignment: (classId: string, body: { title: string; body: Record<string, unknown>; kind: string; dueAt?: string | null }) => request<{ assignment: unknown }>(`/api/classes/${classId}/assignments`, { method: "POST", body: JSON.stringify(body) }),
-  joinSession,
-  subscribePush: (subscription: PushSubscriptionJSON) => request<{ subscribed: boolean }>("/api/push/subscribe", { method: "POST", body: JSON.stringify(subscription) }),
-};
-
-export interface TeamMember {
-  teacher_id: string;
-  revenue_share: number;
-  last_report_at?: string | null;
-  profiles?: { full_name?: string; avatar_url?: string | null; last_login_at?: string | null } | null;
-}
-export interface TeamInvite { id: string; email: string; revenue_share: number; status: string; created_at: string }
-export interface CreateSessionResult {
-  session: { id: string; name: string; starts_at: string; ends_at: string; signaling_room: string; joinUrl: string; signalingUrl: string };
-  notified: { learners: number; emailsSent: number; pushesSent: number };
-}
-export interface JoinSessionResult {
-  session: { id: string; name: string; room: string; startsAt: string; endsAt: string };
-  participant: { id: string; name: string; role: "teacher" | "learner" };
-  signalingUrl: string;
-  socketToken: string;
-  iceServers: RTCIceServer[];
+function urlBase64ToUint8Array(value: string) {
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map((character) => character.charCodeAt(0)));
 }
