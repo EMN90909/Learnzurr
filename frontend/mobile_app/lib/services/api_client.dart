@@ -18,7 +18,8 @@ class ApiClient {
 
   final http.Client _client;
 
-  String get _baseUrl => (dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8081').replaceAll(RegExp(r'/$'), '');
+  String get _baseUrl => (dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8081')
+      .replaceAll(RegExp(r'/$'), '');
 
   Map<String, String> get _headers {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
@@ -35,11 +36,12 @@ class ApiClient {
     required String email,
     required double amount,
     String currency = 'KES',
-  }) => _request(
-        'POST',
-        '/api/payments/initialize',
-        body: {'email': email, 'amount': amount, 'currency': currency},
-      );
+  }) =>
+      _request('POST', '/api/payments/initialize', body: {
+        'email': email,
+        'amount': amount,
+        'currency': currency,
+      });
 
   Future<Map<String, dynamic>> verifyPayment(String reference) =>
       _request('GET', '/api/payments/verify/${Uri.encodeComponent(reference)}');
@@ -47,11 +49,11 @@ class ApiClient {
   Future<Map<String, dynamic>> inviteTeacher({
     required String email,
     required double percentage,
-  }) => _request(
-        'POST',
-        '/api/team/invite',
-        body: {'email': email, 'percentage': percentage},
-      );
+  }) =>
+      _request('POST', '/api/team/invite', body: {
+        'email': email,
+        'percentage': percentage,
+      });
 
   Future<Map<String, dynamic>> _request(
     String method,
@@ -59,16 +61,11 @@ class ApiClient {
     Map<String, dynamic>? body,
   }) async {
     final uri = Uri.parse('$_baseUrl$path');
-    late http.Response response;
-
-    switch (method) {
-      case 'POST':
-        response = await _client.post(uri, headers: _headers, body: jsonEncode(body ?? const {}));
-      case 'GET':
-        response = await _client.get(uri, headers: _headers);
-      default:
-        throw const ApiException('Unsupported request method');
-    }
+    final response = method == 'POST'
+        ? await _client.post(uri, headers: _headers, body: jsonEncode(body ?? const {}))
+        : method == 'GET'
+            ? await _client.get(uri, headers: _headers)
+            : throw const ApiException('Unsupported request method');
 
     Map<String, dynamic> payload = const {};
     if (response.body.isNotEmpty) {
