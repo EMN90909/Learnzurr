@@ -40,6 +40,7 @@ export function LiveClassroom({ sessionId, token }: { sessionId: string; token: 
     }).catch((error) => setStatus(error instanceof Error ? error.message : "Unable to join classroom"));
     return () => {
       cancelled = true;
+      send({ type: "leave" });
       socket.current?.close();
       peers.current.forEach((peer) => peer.close());
       peers.current.clear();
@@ -50,6 +51,7 @@ export function LiveClassroom({ sessionId, token }: { sessionId: string; token: 
   function connect(result: JoinSessionResult) {
     const url = new URL(result.signalingUrl);
     url.searchParams.set("room", result.session.room);
+    url.searchParams.set("session", result.session.id);
     url.searchParams.set("id", result.participant.id);
     url.searchParams.set("role", result.participant.role);
     url.searchParams.set("token", result.socketToken);
@@ -59,14 +61,12 @@ export function LiveClassroom({ sessionId, token }: { sessionId: string; token: 
       setStatus("Connected");
       send({ type: "presence", role: result.participant.role, payload: { name: result.participant.name } });
     };
-    ws.onclose = () => setStatus("Disconnected — reconnect to continue");
+    ws.onclose = (event) => setStatus(event.code === 1000 ? "Classroom closed" : "Disconnected — reconnect to continue");
     ws.onerror = () => setStatus("Signaling connection failed");
     ws.onmessage = async (event) => {
       const message = JSON.parse(event.data) as SignalMessage;
       if (!message.from || message.from === result.participant.id) return;
-      if (message.type === "presence" && result.participant.role === "teacher" && message.role === "learner") {
-        await makeOffer(message.from, result);
-      }
+      if (message.type === "presence" && result.participant.role === "teacher" && message.role === "learner") await makeOffer(message.from, result);
       if (message.type === "offer" && result.participant.role === "learner") {
         const peer = getPeer(message.from, result);
         await peer.setRemoteDescription(message.payload);
@@ -76,9 +76,7 @@ export function LiveClassroom({ sessionId, token }: { sessionId: string; token: 
       }
       if (message.type === "answer") await getPeer(message.from, result).setRemoteDescription(message.payload);
       if (message.type === "ice" && message.payload) await getPeer(message.from, result).addIceCandidate(message.payload).catch(() => undefined);
-      if (message.type === "chat" || message.type === "question") {
-        setMessages((items) => [...items, { author: message.payload?.name ?? "Participant", text: message.payload?.text ?? "", kind: message.type }]);
-      }
+      if (message.type === "chat" || message.type === "question") setMessages((items) => [...items, { author: message.payload?.name ?? "Participant", text: message.payload?.text ?? "", kind: message.type }]);
       if (message.type === "whiteboard") drawRemote(message.payload);
       if (message.type === "leave") closePeer(message.from);
     };
@@ -96,9 +94,7 @@ export function LiveClassroom({ sessionId, token }: { sessionId: string; token: 
     peer.ontrack = (event) => {
       if (remoteVideo.current) remoteVideo.current.srcObject = event.streams[0];
     };
-    if (result.participant.role === "teacher" && stream.current) {
-      stream.current.getTracks().forEach((track) => peer.addTrack(track, stream.current!));
-    }
+    if (result.participant.role === "teacher" && stream.current) stream.current.getTracks().forEach((track) => peer.addTrack(track, stream.current!));
     return peer;
   }
 
@@ -161,8 +157,7 @@ export function LiveClassroom({ sessionId, token }: { sessionId: string; token: 
   }
 
   function point(event: React.PointerEvent<HTMLCanvasElement>) {
-    const target = event.currentTarget;
-    const rect = target.getBoundingClientRect();
+    const rect = event.currentTarget.getBoundingClientRect();
     return { x: (event.clientX - rect.left) / rect.width, y: (event.clientY - rect.top) / rect.height };
   }
 
