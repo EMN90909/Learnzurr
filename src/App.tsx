@@ -1,45 +1,75 @@
-import { useState } from "react";
-import { ArrowRight, BookOpen, CheckCircle2, CreditCard, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { BookOpen, CalendarDays, CheckCircle2, ClipboardList, CreditCard, LayoutDashboard, LogOut, Menu, MessageSquare, Settings, ShieldCheck, Users, Video, WalletCards } from "lucide-react";
+import { supabase, type AppRole } from "./lib/supabase";
 
-const features = [
-  [BookOpen, "Focused learning", "Lessons, resources, and progress in one clear workspace."],
-  [Users, "Designed for every role", "Learners, parents, teachers, and organisations get purpose-built flows."],
-  [ShieldCheck, "Reliable by design", "Typed APIs, validated requests, secure checkout, and accessible motion."],
-] as const;
+const pages: Record<AppRole, { slug: string; label: string; icon: typeof LayoutDashboard }[]> = {
+  teacher: [
+    { slug: "dashboard", label: "Dashboard", icon: LayoutDashboard }, { slug: "team", label: "Team", icon: Users },
+    { slug: "classes", label: "Classes", icon: Video }, { slug: "assignments", label: "Assignments", icon: ClipboardList },
+    { slug: "students", label: "Students", icon: BookOpen }, { slug: "payments", label: "Payments", icon: WalletCards },
+    { slug: "reports", label: "Reports", icon: CheckCircle2 }, { slug: "settings", label: "Settings", icon: Settings },
+  ],
+  learner: [
+    { slug: "dashboard", label: "Dashboard", icon: LayoutDashboard }, { slug: "classes", label: "My classes", icon: Video },
+    { slug: "assignments", label: "Assignments", icon: ClipboardList }, { slug: "lessons", label: "Lessons", icon: BookOpen },
+    { slug: "progress", label: "Progress", icon: CheckCircle2 }, { slug: "questions", label: "Q&A", icon: MessageSquare },
+    { slug: "calendar", label: "Calendar", icon: CalendarDays }, { slug: "settings", label: "Settings", icon: Settings },
+  ],
+  guardian: [
+    { slug: "dashboard", label: "Dashboard", icon: LayoutDashboard }, { slug: "children", label: "Children", icon: Users },
+    { slug: "classes", label: "Classes", icon: Video }, { slug: "progress", label: "Progress", icon: CheckCircle2 },
+    { slug: "payments", label: "Payments", icon: CreditCard }, { slug: "teachers", label: "Teachers", icon: BookOpen },
+    { slug: "messages", label: "Messages", icon: MessageSquare }, { slug: "settings", label: "Settings", icon: Settings },
+  ],
+  admin: [
+    { slug: "dashboard", label: "Dashboard", icon: LayoutDashboard }, { slug: "users", label: "Users", icon: Users },
+    { slug: "classes", label: "Classes", icon: Video }, { slug: "payments", label: "Payments", icon: WalletCards },
+    { slug: "teams", label: "Teacher teams", icon: ShieldCheck }, { slug: "reports", label: "Reports", icon: CheckCircle2 },
+    { slug: "content", label: "Content", icon: BookOpen }, { slug: "settings", label: "Settings", icon: Settings },
+  ],
+};
 
-export default function App() {
-  const [email, setEmail] = useState("");
-  const [amount, setAmount] = useState("1500");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  async function pay(event: React.FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    setError("");
-    try {
-      const response = await fetch("/api/payments/initialize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, amount: Number(amount), currency: "KES" }),
+function AuthPage({ mode, role }: { mode: "signin" | "signup"; role?: AppRole }) {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ name: "", email: new URLSearchParams(location.search).get("email") ?? "", password: "", phone: "", school: "", childName: "" });
+  const [message, setMessage] = useState("");
+  const submit = async (event: FormEvent) => {
+    event.preventDefault(); setMessage("Working…");
+    if (mode === "signin") {
+      const { data, error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
+      if (error) return setMessage(error.message);
+      const assignedRole = (data.user?.user_metadata.role ?? "learner") as AppRole;
+      navigate(`/${assignedRole}/dashboard`);
+    } else {
+      const { error } = await supabase.auth.signUp({
+        email: form.email, password: form.password,
+        options: { emailRedirectTo: `${location.origin}/signin`, data: { role, full_name: form.name, phone: form.phone, school: form.school, child_name: form.childName } },
       });
-      const result = await response.json() as { authorizationUrl?: string; error?: string };
-      if (!response.ok || !result.authorizationUrl) throw new Error(result.error ?? "Unable to start payment");
-      window.location.assign(result.authorizationUrl);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Payment could not be started");
-      setBusy(false);
+      setMessage(error ? error.message : "Check your email for the verification link before signing in.");
     }
-  }
-
-  return <main>
-    <nav className="nav shell"><a className="brand" href="#top"><span>L</span>Learnzurr</a><div className="navlinks"><a href="#platform">Platform</a><a href="#payments">Payments</a><a href="#about">About</a></div><a className="button ghost" href="#payments">Get started</a></nav>
-    <section id="top" className="hero shell"><div className="orb orb-one"/><div className="orb orb-two"/>
-      <div className="hero-copy reveal"><p className="eyebrow"><Sparkles size={16}/> Modern learning, beautifully connected</p><h1>Make every learning moment <em>move forward.</em></h1><p className="lead">Learnzurr brings classes, resources, progress, and secure payments into one fast experience for learners, families, and educators.</p><div className="actions"><a className="button primary" href="#payments">Start learning <ArrowRight size={18}/></a><a className="button secondary" href="#platform">Explore platform</a></div><div className="trust"><span><CheckCircle2/>TypeScript end to end</span><span><CheckCircle2/>Express + Node.js</span><span><CheckCircle2/>Paystack checkout</span></div></div>
-      <div className="hero-card float"><div className="card-head"><span>Learning pulse</span><span className="live">Live</span></div><div className="score"><small>Weekly progress</small><strong>84%</strong><div className="bar"><i/></div></div><div className="mini-grid"><article><small>Lessons</small><b>12</b></article><article><small>Streak</small><b>9 days</b></article></div><div className="lesson"><div className="lesson-icon"><BookOpen/></div><div><small>Up next</small><b>Algebra foundations</b></div><ArrowRight/></div></div>
-    </section>
-    <section id="platform" className="section shell"><p className="eyebrow">One coherent platform</p><h2>Less friction. More meaningful progress.</h2><div className="feature-grid">{features.map(([Icon,title,text],index)=><article className="feature reveal" style={{animationDelay:`${index*120}ms`}} key={title}><div className="icon"><Icon/></div><h3>{title}</h3><p>{text}</p></article>)}</div></section>
-    <section id="payments" className="payment-section shell"><div><p className="eyebrow"><CreditCard size={16}/> Secure checkout</p><h2>Pay for learning with Paystack.</h2><p className="lead small">Your Paystack secret key stays on the Express server. Transactions are initialized securely and can be verified by reference.</p></div><form className="pay-card" onSubmit={pay}><label>Email<input required type="email" value={email} onChange={event=>setEmail(event.target.value)} placeholder="you@example.com"/></label><label>Amount (KES)<input required min="10" step="1" type="number" value={amount} onChange={event=>setAmount(event.target.value)}/></label><button className="button primary wide" disabled={busy}>{busy?"Opening checkout…":"Continue to Paystack"}<ArrowRight size={18}/></button>{error&&<p className="error" role="alert">{error}</p>}<small className="secure"><ShieldCheck size={15}/>Payment details are handled by Paystack.</small></form></section>
-    <footer id="about" className="footer shell"><a className="brand" href="#top"><span>L</span>Learnzurr</a><p>React + Vite frontend. TypeScript + Express backend.</p></footer>
-  </main>;
+  };
+  return <div className="auth-shell"><section className="auth-copy"><a className="brand" href="/"><span>L</span>Learnzurr</a><h1>{mode === "signin" ? "Welcome back" : `Create your ${role} account`}</h1><p>{mode === "signin" ? "One secure sign-in for teachers, learners, guardians, and administrators." : "Your email must be verified before dashboard access is enabled."}</p></section><form className="auth-card" onSubmit={submit}>
+    {mode === "signup" && <label>Full name<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label>}
+    <label>Email<input required type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>
+    {mode === "signup" && role === "teacher" && <label>School or team<input value={form.school} onChange={e=>setForm({...form,school:e.target.value})}/></label>}
+    {mode === "signup" && role === "guardian" && <label>Child name<input value={form.childName} onChange={e=>setForm({...form,childName:e.target.value})}/></label>}
+    {mode === "signup" && role === "learner" && <label>Guardian phone<input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></label>}
+    <label>Password<input required minLength={8} type="password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})}/></label>
+    <button className="button primary wide">{mode === "signin" ? "Sign in" : "Create account"}</button><p className="form-message">{message}</p>
+    {mode === "signin" ? <p>New here? <a href="/signup">Choose your account type</a></p> : <p>Already registered? <a href="/signin">Sign in</a></p>}
+  </form></div>;
 }
+
+function SignupChooser(){return <div className="chooser"><a className="brand" href="/"><span>L</span>Learnzurr</a><h1>How will you use Learnzurr?</h1><div className="role-grid">{(["teacher","learner","guardian","admin"] as AppRole[]).map(role=><a key={role} className="role-card" href={`/signup/${role}`}><Users/><h2>{role === "guardian" ? "Guardian / Parent" : role}</h2><p>Continue with the signup fields and permissions designed for this role.</p></a>)}</div></div>}
+
+function TeacherTeam(){const [email,setEmail]=useState("");const [share,setShare]=useState("10");const [status,setStatus]=useState("");async function invite(e:FormEvent){e.preventDefault();setStatus("Sending…");const r=await fetch("/api/team/invite",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,percentage:Number(share)})});const j=await r.json();setStatus(r.ok?"Invitation sent":j.error??"Invite failed")}return <div><div className="page-head"><div><p className="eyebrow">Teacher workspace</p><h1>Team</h1></div></div><div className="split"><form className="panel" onSubmit={invite}><h2>Add a teacher</h2><label>Email<input type="email" required value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Revenue share (%)<input type="number" min="0" max="100" required value={share} onChange={e=>setShare(e.target.value)}/></label><button className="button primary">Send signup link</button><p>{status}</p></form><div className="panel"><h2>Current team</h2>{["Amina N.","Brian K.","Faith W."].map((name,i)=><div className="member" key={name}><span className="avatar">{name[0]}</span><div><b>{name}</b><small>Last login {i+1} day ago · {10+i*5}% share</small></div><button>Report</button></div>)}</div></div></div>}
+
+function ClassesPage(){const [open,setOpen]=useState(false);return <div><div className="page-head"><div><p className="eyebrow">Live learning</p><h1>Classes</h1></div><button className="button primary" onClick={()=>setOpen(true)}>Create live classroom</button></div><div className="cards"><article className="panel"><span className="live">Scheduled</span><h2>Algebra foundations</h2><p>Today, 4:00 PM–5:00 PM · 2 teachers · 32 learners</p><button className="button secondary">Open classroom</button></article><article className="panel"><h2>Create learning work</h2><p>Write rich-text tasks, questions, quizzes, or assessments and send them to enrolled learners.</p><button className="button secondary">New assignment</button></article></div>{open&&<div className="modal-backdrop"><form className="modal" onSubmit={e=>{e.preventDefault();setOpen(false)}}><h2>Schedule live classroom</h2><label>Meeting name<input required/></label><label>Start time<input required type="datetime-local"/></label><label>End time<input required type="datetime-local"/></label><p>All enrolled learners will receive email and web-push notifications with a unique signed join link.</p><button className="button primary wide">Schedule and notify</button><button type="button" className="button secondary wide" onClick={()=>setOpen(false)}>Cancel</button></form></div>}</div>}
+
+function GenericPage({ role, slug }: { role: AppRole; slug: string }) {const title=pages[role].find(p=>p.slug===slug)?.label??"Dashboard";if(role==="teacher"&&slug==="team")return <TeacherTeam/>;if(slug==="classes")return <ClassesPage/>;return <div><div className="page-head"><div><p className="eyebrow">{role} workspace</p><h1>{title}</h1></div><button className="button primary">Quick action</button></div><div className="stats"><article><small>Active learners</small><strong>128</strong><span>+12 this month</span></article><article><small>Completion</small><strong>84%</strong><span>Across active classes</span></article><article><small>Revenue</small><strong>KES 248k</strong><span>Paystack verified</span></article></div><div className="cards"><article className="panel"><h2>Recent activity</h2>{["New learner joined Form 2 Mathematics","Assessment results published","Payment split completed"].map(x=><p className="activity" key={x}>{x}<small>Recently</small></p>)}</article><article className="panel"><h2>Quick access</h2><div className="quick"><button>Schedule class</button><button>Create task</button><button>View reports</button><button>Message team</button></div></article></div></div>}
+
+function Dashboard(){const {role="learner",page="dashboard"}=useParams();const appRole=(role in pages?role:"learner") as AppRole;const [mobile,setMobile]=useState(false);const navigate=useNavigate();const items=useMemo(()=>pages[appRole],[appRole]);return <div className="app-shell"><aside className={mobile?"sidebar open":"sidebar"}><a className="brand" href="/"><span>L</span>Learnzurr</a><p className="role-pill">{appRole}</p><nav>{items.map(({slug,label,icon:Icon})=><button className={page===slug?"active":""} key={slug} onClick={()=>{navigate(`/${appRole}/${slug}`);setMobile(false)}}><Icon size={19}/>{label}</button>)}</nav><button className="logout" onClick={()=>supabase.auth.signOut().then(()=>navigate("/signin"))}><LogOut size={18}/>Sign out</button></aside><main className="workspace"><header><button className="menu" onClick={()=>setMobile(!mobile)}><Menu/></button><div><b>Good day</b><small>Here is what is happening in Learnzurr.</small></div><span className="avatar">L</span></header><section className="page"><GenericPage role={appRole} slug={page}/></section></main></div>}
+
+function AppRoutes(){return <Routes><Route path="/" element={<Navigate to="/signin" replace/>}/><Route path="/signin" element={<AuthPage mode="signin"/>}/><Route path="/signup" element={<SignupChooser/>}/>{(["teacher","learner","guardian","admin"] as AppRole[]).map(role=><Route key={role} path={`/signup/${role}`} element={<AuthPage mode="signup" role={role}/>}/>)}<Route path="/:role/:page" element={<Dashboard/>}/><Route path="*" element={<Navigate to="/signin" replace/>}/></Routes>}
+export default function App(){return <BrowserRouter><AppRoutes/></BrowserRouter>}
