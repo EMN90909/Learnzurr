@@ -3,6 +3,8 @@ alter table public.profiles add column if not exists updated_at timestamptz not 
 update public.profiles p set email = u.email from auth.users u where u.id = p.id and p.email is null;
 create unique index if not exists profiles_email_unique_idx on public.profiles(lower(email)) where email is not null;
 
+alter table public.payments add column if not exists created_at timestamptz not null default now();
+alter table public.payment_splits add column if not exists created_at timestamptz not null default now();
 alter table public.push_subscriptions add column if not exists updated_at timestamptz not null default now();
 alter table public.push_subscriptions add column if not exists user_agent text;
 
@@ -55,6 +57,58 @@ begin
   return new;
 end;
 $$;
+
+create or replace function public.enforce_team_revenue_share_limit()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  allocated numeric(7,2) := 0;
+begin
+  if tg_table_name = 'team_members' then
+    select coalesce(sum(revenue_share),0) into allocated
+    from public.team_members
+    where team_id = new.team_id
+      and teacher_id <> new.teacher_id;
+
+    select allocated + coalesce(sum(revenue_share),0) into allocated
+    from public.teacher_invites
+    where team_id = new.team_id
+      and status = 'pending'
+      and invited_user_id is distinct from new.teacher_id;
+  else
+    if new.status <> 'pending' then
+      return new;
+    end if;
+
+    select coalesce(sum(revenue_share),0) into allocated
+    from public.team_members
+    where team_id = new.team_id;
+
+    select allocated + coalesce(sum(revenue_share),0) into allocated
+    from public.teacher_invites
+    where team_id = new.team_id
+      and status = 'pending'
+      and id <> new.id;
+  end if;
+
+  if allocated + new.revenue_share > 100 then
+    raise exception 'Teacher revenue shares cannot exceed 100 percent';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists team_member_revenue_share_limit on public.team_members;
+create trigger team_member_revenue_share_limit
+before insert or update of team_id,revenue_share on public.team_members
+for each row execute procedure public.enforce_team_revenue_share_limit();
+
+drop trigger if exists teacher_invite_revenue_share_limit on public.teacher_invites;
+create trigger teacher_invite_revenue_share_limit
+before insert or update of team_id,revenue_share,status on public.teacher_invites
+for each row execute procedure public.enforce_team_revenue_share_limit();
 
 create policy "profile owner update" on public.profiles for update to authenticated
 using(id=auth.uid()) with check(id=auth.uid());
