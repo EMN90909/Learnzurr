@@ -123,7 +123,7 @@ app.post("/api/team/invite", requireUser, async (req: AuthenticatedRequest, res,
     const input = inviteSchema.parse(req.body);
     const { data: team } = await admin!.from("teacher_teams").select("id,owner_id").eq("id", input.teamId).single();
     if (!team || team.owner_id !== req.user!.id) return res.status(403).json({ error: "Only the team owner can invite teachers" });
-    const inviter = input.inviterName ?? profile.full_name || req.user!.email || "a Learnzurr teacher";
+    const inviter = input.inviterName ?? (profile.full_name || req.user!.email || "a Learnzurr teacher");
     const { data, error } = await admin!.auth.admin.inviteUserByEmail(input.email, {
       redirectTo: `${publicUrl}/signup/teacher?email=${encodeURIComponent(input.email)}&team=${input.teamId}`,
       data: { role: "teacher", team_id: input.teamId, revenue_share: input.percentage, invited_by: inviter },
