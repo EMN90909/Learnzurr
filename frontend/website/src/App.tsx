@@ -4,6 +4,7 @@ import { BookOpen, CalendarDays, CheckCircle2, ClipboardList, CreditCard, Layout
 import { supabase, type AppRole } from "./lib/supabase";
 import { api, enableWebPush } from "./lib/api";
 import { LiveClassroom } from "./features/live/LiveClassroom";
+import { PaystackCheckout } from "./features/payments/PaystackCheckout";
 import { TeacherClasses, TeacherDashboard, TeacherTeam } from "./features/teacher/TeacherPages";
 import { RoleDataPage } from "./features/roles/RolePages";
 
@@ -118,7 +119,7 @@ function SignupChooser() {
 function TeacherClassesLoader() {
   const [classes, setClasses] = useState<{ id: string; title: string }[]>([]);
   const [message, setMessage] = useState("Loading classes…");
-  useEffect(() => { api.teacherDashboard().then((result) => { setClasses(result.classes); setMessage(""); }).catch((error) => setMessage(error.message)); }, []);
+  useEffect(() => { api.teacherDashboard().then((result) => { setClasses(result.classes); setMessage(""); }).catch((error: Error) => setMessage(error.message)); }, []);
   if (message) return <p className="form-message">{message}</p>;
   return <TeacherClasses classes={classes}/>;
 }
@@ -128,7 +129,7 @@ function TeacherTeamLoader({ metadataTeamId }: { metadataTeamId?: string }) {
   const [message, setMessage] = useState(metadataTeamId ? "" : "Loading team…");
   useEffect(() => {
     if (metadataTeamId) return;
-    api.teacherDashboard().then((result) => { setTeamId(result.teams?.[0]?.id); setMessage(result.teams?.length ? "" : "Create a teacher team before inviting staff."); }).catch((error) => setMessage(error.message));
+    void api.teacherDashboard().then((result) => { setTeamId(result.teams?.[0]?.id); setMessage(result.teams?.length ? "" : "A default teaching team is being prepared."); }).catch((error: Error) => setMessage(error.message));
   }, [metadataTeamId]);
   if (!teamId && message) return <p className="form-message">{message}</p>;
   return <TeacherTeam teamId={teamId}/>;
@@ -140,6 +141,7 @@ function RolePage({ role, slug }: { role: AppRole; slug: string }) {
   if (role === "teacher" && slug === "dashboard") return <TeacherDashboard/>;
   if (role === "teacher" && slug === "team") return <TeacherTeamLoader metadataTeamId={typeof userMetadata.team_id === "string" ? userMetadata.team_id : undefined}/>;
   if (role === "teacher" && (slug === "classes" || slug === "assignments")) return <TeacherClassesLoader/>;
+  if (role === "guardian" && slug === "payments") return <PaystackCheckout/>;
   if (slug === "settings") return <SettingsPage/>;
   return <RoleDataPage role={role} slug={slug}/>;
 }
@@ -147,7 +149,7 @@ function RolePage({ role, slug }: { role: AppRole; slug: string }) {
 function SettingsPage() {
   const [status, setStatus] = useState("");
   const [health, setHealth] = useState("");
-  useEffect(() => { void api.health().then((result) => setHealth(`API connected · signaling ${result.signaling}`)).catch((error) => setHealth(error.message)); }, []);
+  useEffect(() => { void api.health().then((result) => setHealth(`API connected · signaling ${result.signaling}`)).catch((error: Error) => setHealth(error.message)); }, []);
   async function enablePush() {
     setStatus("Requesting permission…");
     try {
