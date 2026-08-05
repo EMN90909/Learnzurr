@@ -19,6 +19,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return payload as T;
 }
 
+async function joinSession(sessionId: string, token: string) {
+  const result = await request<JoinSessionResult>(`/api/live/${sessionId}/join`, { method: "POST", body: JSON.stringify({ token }) });
+  const signaling = new URL(result.signalingUrl);
+  signaling.searchParams.set("session", result.session.id);
+  return { ...result, signalingUrl: signaling.toString() };
+}
+
 export const api = {
   health: () => request<{ ok: boolean; signaling: string }>("/api/health"),
   teacherDashboard: () => request<{ students: number; revenue: number; classes: { id: string; title: string }[]; teachers: unknown[] }>("/api/teacher/dashboard"),
@@ -26,7 +33,7 @@ export const api = {
   inviteTeacher: (body: { teamId: string; email: string; percentage: number; inviterName?: string }) => request<{ message: string }>("/api/team/invite", { method: "POST", body: JSON.stringify(body) }),
   createSession: (classId: string, body: { name: string; startsAt: string; endsAt: string }) => request<CreateSessionResult>(`/api/classes/${classId}/sessions`, { method: "POST", body: JSON.stringify(body) }),
   createAssignment: (classId: string, body: { title: string; body: Record<string, unknown>; kind: string; dueAt?: string | null }) => request<{ assignment: unknown }>(`/api/classes/${classId}/assignments`, { method: "POST", body: JSON.stringify(body) }),
-  joinSession: (sessionId: string, token: string) => request<JoinSessionResult>(`/api/live/${sessionId}/join`, { method: "POST", body: JSON.stringify({ token }) }),
+  joinSession,
   subscribePush: (subscription: PushSubscriptionJSON) => request<{ subscribed: boolean }>("/api/push/subscribe", { method: "POST", body: JSON.stringify(subscription) }),
 };
 
