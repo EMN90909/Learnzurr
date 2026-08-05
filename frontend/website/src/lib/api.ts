@@ -51,6 +51,9 @@ export const api = {
     request<CreateSessionResult>(`/api/classes/${classId}/sessions`, { method: "POST", body }),
   createAssignment: (classId: string, body: { title: string; body: Record<string, unknown>; kind: string; dueAt?: string | null }) =>
     request<{ assignment: unknown }>(`/api/classes/${classId}/assignments`, { method: "POST", body }),
+  initializePayment: (body: { email: string; amount: number; classId?: string; studentId?: string; currency?: string }) =>
+    request<{ authorizationUrl: string; reference: string }>("/api/payments/initialize", { method: "POST", body: { currency: "KES", ...body } }),
+  verifyPayment: (reference: string) => request<{ data?: { status?: string; reference?: string; amount?: number } }>(`/api/payments/verify/${encodeURIComponent(reference)}`),
   joinSession,
   subscribePush: (subscription: PushSubscriptionJSON) =>
     request<{ subscribed: boolean }>("/api/push/subscribe", { method: "POST", body: subscription }),
