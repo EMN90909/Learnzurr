@@ -64,11 +64,11 @@ func startEmbeddedTURN() (*turn.Server, error) {
 
   server, err := turn.NewServer(turn.ServerConfig{
     Realm: realm,
-    AuthHandler: func(candidate, requestRealm string, _ net.Addr) ([]byte, bool) {
-      if candidate != username {
-        return nil, false
+    AuthHandler: func(attributes *turn.RequestAttributes) (string, []byte, bool) {
+      if attributes == nil || attributes.Username != username {
+        return "", nil, false
       }
-      return turn.GenerateAuthKey(candidate, requestRealm, password), true
+      return attributes.Username, turn.GenerateAuthKey(attributes.Username, attributes.Realm, password), true
     },
     PacketConnConfigs: []turn.PacketConnConfig{{
       PacketConn: packetConnection,
